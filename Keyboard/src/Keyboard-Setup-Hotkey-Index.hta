@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>Keyboard Hotkey Index</title>
+<HTA:APPLICATION ID="hotkeyIndexApp" APPLICATIONNAME="Keyboard Hotkey Index" BORDER="dialog" CAPTION="yes" SCROLL="no" SINGLEINSTANCE="yes" MINIMIZEBUTTON="yes" MAXIMIZEBUTTON="no" SYSMENU="yes" WINDOWSTATE="normal" />
+<style>
+* {box-sizing:border-box;}
+html,body {margin:0;width:100%;height:100%;overflow:hidden;background:#10151d;color:#e5ecf5;font:15px "Segoe UI",Arial,sans-serif;}
+#root {width:1080px;height:900px;padding:22px 25px;}
+h1 {margin:0;font-size:25px;font-weight:600;}
+.sub {color:#94a7bb;margin:5px 0 20px;font-size:14px;}
+.controls {display:table;width:100%;border-spacing:0;margin-bottom:13px;}
+.controls > div {display:table-cell;vertical-align:bottom;}
+.controls > div:first-child {width:285px;padding-right:12px;}
+.controls > div:nth-child(2) {padding-right:12px;}
+.controls > div:last-child {width:105px;}
+label {display:block;color:#91a7ba;font-size:12px;letter-spacing:.10em;margin-bottom:6px;}
+select,input {width:100%;height:36px;background:#131e2c;border:1px solid #3c5069;color:#edf4fc;padding:7px 10px;border-radius:5px;outline:none;}
+select:focus,input:focus {border-color:#61aaff;}
+button {background:#223448;color:#dfeaf6;border:1px solid #3e5670;border-radius:5px;height:36px;padding:6px 12px;cursor:pointer;font:inherit;}
+button:hover {background:#31506d;}
+button:disabled {opacity:.38;cursor:default;}
+.btn-wide {width:100%;}
+.context-tools {display:none;height:53px;margin:0 0 6px;padding:0 0 7px;border-bottom:1px solid #263a50;}
+.context-tools > div {display:inline-block;vertical-align:middle;}
+.context-tools .context-select {width:420px;max-width:45%;margin-right:12px;}
+.context-tools .context-status {color:#91a8bc;font-size:13px;line-height:1.4;max-width:555px;}
+.detail-metadata {color:#83b5e8;font-size:13px;line-height:1.4;margin-bottom:5px;}
+.override-context {color:#f1b877;font-weight:600;}
+.headline {display:table;width:100%;margin:8px 0 9px;color:#9fb1c5;}
+.headline > span {display:table-cell;}
+.headline > span:last-child {text-align:right;}
+.tableframe {height:418px;border:1px solid #2e4157;border-radius:7px;background:#151e2a;overflow:hidden;}
+table {border-collapse:collapse;width:100%;table-layout:fixed;font-size:14px;}
+thead {background:#223045;color:#90a6bb;text-transform:uppercase;letter-spacing:.06em;font-size:12px;}
+th {text-align:left;height:35px;padding:0 12px;border-bottom:1px solid #3d526c;}
+td {padding:0 12px;height:31px;border-bottom:1px solid #253347;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+tr.item {cursor:pointer;}
+tr.item:nth-child(even) {background:#192533;}
+tr.item:hover {background:#273e54;}
+tr.chosen {background:#204263;}
+tr.chosen:nth-child(even) {background:#204263;}
+.shortcut {font-weight:600;color:#DFE9F5;}
+.modifier-swatch {display:inline-block;width:14px;height:17px;border:1px solid #B6C2CF;vertical-align:middle;margin-right:7px;}
+.status {color:#aab9cb;}
+.pager {display:table;width:100%;margin:11px 0 11px;}
+.pager > span {display:table-cell;vertical-align:middle;color:#9fb0c4;}
+.pager > span:last-child {text-align:right;}
+.pager button {height:29px;padding:4px 14px;margin-left:7px;}
+.details {border:1px solid #32455b;background:#172332;border-radius:7px;padding:13px 17px;height:139px;overflow:hidden;}
+.detail-name {font-size:16px;font-weight:600;color:#fff;margin-bottom:7px;}
+.detail-flow {color:#b4c6d8;font-size:14px;line-height:1.5;}
+.bottom {display:table;width:100%;margin-top:12px;color:#8b9fb4;font-size:13px;}
+.bottom > span {display:table-cell;vertical-align:middle;}
+.bottom > span:last-child {text-align:right;}
+.bottom button {font-size:13px;height:30px;margin-left:7px;}
+</style>
+<script language="javascript" src="../data/Keyboard-Setup-Modifier-Colors.js"></script>
+<script language="javascript" src="../data/Keyboard-Setup-Catalog.js"></script>
+<script language="javascript" src="../data/Keyboard-Setup-Windows.js"></script>
+<script language="javascript" src="../data/Keyboard-Setup-Max-Defaults.js"></script>
+<script language="javascript" src="../data/Keyboard-Setup-Max-Preset.js"></script>
+<script language="javascript">
+var hotkey_index_version = "0.30";
+var hotkey_index_profile = "windows";
+var hotkey_index_page = 0;
+var hotkey_index_page_size = 12;
+var hotkey_index_selected_id = "";
+var hotkey_index_rows = [];
+var hotkey_index_max_metadata = {};
+var hotkey_index_metadata_file = "";
+
+function hotkeyIndexFormat(record)
+{
+  var parts = [];
+  var mods = record.modifiers || [];
+  var quote = record.key === "'" && mods.indexOf("Shift") >= 0;
+  var order = ["Ctrl", "Shift", "Alt", "Win"];
+  for (var i=0; i<order.length; i++)
+  {
+    if (quote && order[i] === "Shift") {continue;}
+    if (mods.indexOf(order[i]) >= 0) {parts.push(order[i]);}
+  }
+  parts.push(quote ? '"' : record.key);
+  return parts.join(" + ");
+}
+
+function hotkeyIndexCode(record)
+{
+  return (record.modifiers && record.modifiers.length ? record.modifiers.join("+") + "+" : "") + record.key;
+}
+
+function hotkeyIndexReadOverrides()
+{
+  var overrides = {};
+  if (typeof ActiveXObject === "undefined") {return overrides;}
+  try
+  {
+    var fs = new ActiveXObject("Scripting.FileSystemObject");
+    var path = unescape(window.location.pathname).replace(/\//g, "\\");
+    if (/^\\[A-Za-z]:/.test(path)) {path = path.substr(1);}
+    var root = fs.GetParentFolderName(fs.GetParentFolderName(path));
+    var config = fs.BuildPath(root, "config\\Keyboard-Setup-File-Bindings.ini");
+    if (!fs.FileExists(config)) {config = fs.BuildPath(root, "Keyboard-Setup-File-Bindings.ini");}
+    if (!fs.FileExists(config)) {return overrides;}
+    var stream = fs.OpenTextFile(config, 1, false, -1);
+    var lines = stream.ReadAll().split(/\r?\n/);
+    stream.Close();
+    var inFiles = false;
+    for (var i=0;i<lines.length;i++)
+    {
+      var row = lines[i].replace(/^\s+|\s+$/g, "");
+      if (row.charAt(0) === "[") {inFiles = row.toLowerCase() === "[files]";continue;}
+      if (!inFiles) {continue;}
+      var pos = row.indexOf("=");
+      if (pos > 0) {overrides[row.substr(0,pos).replace(/\s+$/g, "")] = row.substr(pos+1).replace(/^\s+|\s+$/g, "");}
+    }
+  }
+  catch (read_error) { /* A bad/missing INI cannot prevent index display. */ }
+  return overrides;
+}
+
+function hotkeyIndexReadToolkitPaths()
+{
+  var saved = {};
+  if (typeof ActiveXObject === "undefined") {return saved;}
+  try
+  {
+    var fs = new ActiveXObject("Scripting.FileSystemObject");
+    var path = unescape(window.location.pathname).replace(/\//g, "\\");
+    if (/^\\[A-Za-z]:/.test(path)) {path = path.substr(1);}
+    var root = fs.GetParentFolderName(fs.GetParentFolderName(path));
+    var ini = fs.BuildPath(root, "config\\Keyboard-Setup-Toolkit-Paths.ini");
+    if (!fs.FileExists(ini)) {return saved;}
+    var stream = fs.OpenTextFile(ini, 1, false, -1);
+    var rows = stream.ReadAll().split(/\r?\n/);
+    stream.Close();
+    var section = "";
+    for (var i=0;i<rows.length;i++)
+    {
+      var line = rows[i].replace(/^\s+|\s+$/g, "");
+      if (line.charAt(0)==="[") {section=line.toLowerCase();continue;}
+      if (section !== "[paths]") {continue;}
+      var pos = line.indexOf("=");
+      if (pos > 0) {saved[line.substr(0,pos).replace(/\s+$/g,"")]=line.substr(pos+1).replace(/^\s+|\s+$/g,"");}
+    }
+  }
+  catch (error) { /* Invalid saved location must not hide actions. */ }
+  return saved;
+}
+
+function hotkeyIndexMergeMax(factory, overlay)
+{
+  var removals = {};
+  var assigned = {};
+  var output = [];
+  var i;
+  for (i=0; i<(overlay.removals || []).length; i++)
+  {
+    var deleted = overlay.removals[i];
+    removals[deleted.id + "\u0001" + deleted.shortcut] = true;
+  }
+  for (i=0; i<factory.length; i++)
+  {
+    var original = factory[i];
+    var identity = original.id + "\u0001" + original.shortcut;
+    if (!removals[identity]) {assigned[identity]=output.length;output.push(original);}
+  }
+  for (i=0; i<(overlay.assignments || []).length; i++)
+  {
+    var custom = overlay.assignments[i];
+    var key = custom.id + "\u0001" + custom.shortcut;
+    var item = {key:custom.key,modifiers:custom.modifiers,name:custom.name,shortcut:custom.shortcut,id:custom.id,origin:"Custom"};
+    if (assigned.hasOwnProperty(key)) {output[assigned[key]]=item;}
+    else {assigned[key]=output.length;output.push(item);}
+  }
+  return output;
+}
+
+/* ActionMan table IDs in HSXB use UInt32, but MAXScript may export signed Int32. */
+function hotkeyIndexNormalId(id)
+{
+  var parts = /^(\d+)-(.*)$/.exec(String(id || ""));
+  if (!parts) {return id || "";}
+  var table = Number(parts[1]);
+  if (table > 2147483647 && table <= 4294967295) {table -= 4294967296;}
+  return String(table) + "-" + parts[2];
+}
+
+/* Read the TSV written by the existing, read-only 3ds Max ActionMan exporter.
+   No grouping is invented when a matching ActionMan record cannot be found. */
+function hotkeyIndexLoadMaxMetadata()
+{
+  hotkey_index_metadata_file = "";
+  var lookup = {};
+  if (typeof ActiveXObject === "undefined") {return lookup;}
+  try
+  {
+    var fs = new ActiveXObject("Scripting.FileSystemObject");
+    var shell = new ActiveXObject("WScript.Shell");
+    var path = unescape(window.location.pathname).replace(/\//g, "\\");
+    if (/^\\[A-Za-z]:/.test(path)) {path = path.substr(1);}
+    var root = fs.GetParentFolderName(fs.GetParentFolderName(path));
+    var files = [fs.BuildPath(root, "import\\3DsMax\\ActionTables.tsv"),
+      shell.ExpandEnvironmentStrings("%TEMP%") + "\\KeyboardSetupMaxImport\\ActionTables.tsv"];
+    var source = "";
+    for (var i=0;i<files.length;i++) {if (fs.FileExists(files[i])) {source = files[i];break;}}
+    if (!source) {return lookup;}
+    var stream = new ActiveXObject("ADODB.Stream");
+    stream.Type=2;
+    stream.Charset="utf-8";
+    stream.Open();
+    stream.LoadFromFile(source);
+    var rows=stream.ReadText().split(/\r?\n/);
+    stream.Close();
+    for (var j=1;j<rows.length;j++)
+    {
+      var fields=rows[j].split("\t");
+      if (fields.length < 5 || !fields[0]) {continue;}
+      lookup[fields[0]] = {category:fields[1], description:fields[2], action_table:fields[3], context:fields[4]};
+    }
+    hotkey_index_metadata_file = source;
+  }
+  catch (error) {hotkey_index_metadata_file = "";}
+  return lookup;
+}
+
+function hotkeyIndexMetadataMatchesEditPoly(record)
+{
+  var text=((record.context || "") + " " + (record.action_table || "") + " " + (record.category || "")).toLowerCase();
+  return /\bedit[\s_-]*poly\b|\beditable[\s_-]*poly\b/.test(text);
+}
+
+/* Select an exact exported context, action table or category, or the union
+   of fields related to Edit Poly. Only classified bindings can match. */
+function hotkeyIndexMatchesContext(record, chosen)
+{
+  if (!chosen) {return true;}
+  if (chosen === "related:edit-poly") {return hotkeyIndexMetadataMatchesEditPoly(record);}
+  var sep=chosen.indexOf(":");
+  if (sep < 1) {return false;}
+  var kind=chosen.substr(0,sep);
+  if (kind !== "context" && kind !== "action_table" && kind !== "category") {return false;}
+  return String(record[kind] || "").toLowerCase() === chosen.substr(sep+1).toLowerCase();
+}
+
+function hotkeyIndexContextOptions(rows)
+{
+  var options=[{value:"", label:"All 3ds Max hotkeys"}];
+  var kinds=[{field:"context",label:"Context"},{field:"action_table",label:"Action table"},{field:"category",label:"Category"}];
+  var seen={};
+  var by_kind={context:[],action_table:[],category:[]};
+  var has_poly=false;
+  for (var i=0;i<rows.length;i++)
+  {
+    var row=rows[i];
+    if (hotkeyIndexMetadataMatchesEditPoly(row)) {has_poly=true;}
+    for (var k=0;k<kinds.length;k++)
+    {
+      var field=kinds[k].field;
+      var name=String(row[field] || "").replace(/^\s+|\s+$/g, "");
+      var unique=field+":"+name.toLowerCase();
+      if (name && !seen[unique]) {seen[unique]=true;by_kind[field].push(name);}
+    }
+  }
+  if (has_poly) {options.push({value:"related:edit-poly",label:"Edit Poly (all related contexts / tables / categories)"});}
+  for (var j=0;j<kinds.length;j++)
+  {
+    var kind=kinds[j];
+    var names=by_kind[kind.field].sort(function(a,b){return a.toLowerCase()<b.toLowerCase()?-1:(a.toLowerCase()>b.toLowerCase()?1:0);});
+    for (var n=0;n<names.length;n++) {options.push({value:kind.field+":"+names[n],label:kind.label+": "+names[n]});}
+  }
+  return options;
+}
+
+function hotkeyIndexPopulateContextFilter()
+{
+  var tools=document.getElementById("indexContextTools");
+  var select=document.getElementById("indexContextFilter");
+  var status=document.getElementById("indexMetadataStatus");
+  if (hotkey_index_profile !== "max") {tools.style.display="none";return;}
+  tools.style.display="block";
+  var old=select.value;
+  var options=hotkeyIndexContextOptions(hotkey_index_rows);
+  while (select.firstChild) {select.removeChild(select.firstChild);}
+  for (var i=0;i<options.length;i++)
+  {
+    var item=document.createElement("option");
+    item.value=options[i].value;
+    item.text=options[i].label;
+    select.appendChild(item);
+  }
+  select.value=old;
+  if (select.selectedIndex < 0) {select.value="";}
+  var classified=0;
+  for (var j=0;j<hotkey_index_rows.length;j++)
+  {
+    var row=hotkey_index_rows[j];
+    if (row.context || row.action_table || row.category) {classified++;}
+  }
+  status.innerText=classified
+    ? classified + " / " + hotkey_index_rows.length + " actions classified from ActionTables.tsv."
+    : "Context metadata unavailable. Run Import 3ds Max in the keyboard editor first.";
+}
+
+function hotkeyIndexContextChanged()
+{
+  hotkey_index_page=0;
+  hotkey_index_selected_id="";
+  hotkeyIndexRender();
+}
+
+function hotkeyIndexNormalChord(chord)
+{
+  var parts = String(chord || "").replace(/\s+/g, "").split("+");
+  var key = parts.pop();
+  var order = ["Ctrl", "Shift", "Alt", "Win"];
+  var sorted = [];
+  for (var i = 0; i < order.length; i++)
+  {
+    for (var j = 0; j < parts.length; j++)
+    {
+      if (parts[j].toLowerCase() === order[i].toLowerCase()) { sorted.push(order[i]); break; }
+    }
+  }
+  sorted.push(key);
+  return sorted.join("+").toLowerCase();
+}
+function hotkeyIndexReadableChord(chord)
+{
+  return String(chord || "").replace(/\+/g, " + ");
+}
+
+function hotkeyIndexRecords(profile, metadata)
+{
+  if (!metadata) {metadata=hotkey_index_max_metadata;}
+  var records = [];
+  var i;
+  if (profile === "windows")
+  {
+    var overrides = hotkeyIndexReadOverrides();
+    var saved_paths = hotkeyIndexReadToolkitPaths();
+    for (i=0; i<keyboard_shortcut_catalog.length; i++)
+    {
+      var entry = keyboard_shortcut_catalog[i];
+      var path = overrides[hotkeyIndexCode(entry)] || "";
+      var external = !!entry.default_file;
+      var actual_file = path || saved_paths[hotkeyIndexCode(entry)] || entry.default_file || "";
+      records.push({id:"global:" + hotkeyIndexCode(entry), shortcut:hotkeyIndexFormat(entry), modifiers:entry.modifiers, name:entry.name,
+        when:entry.when, status:path ? "File override" : (external ? "External script" : "Resident"), summary:entry.summary,
+        flow:external ? (entry.flow + "\nExecuted file: " + actual_file + "\nWhen missing, Keyboard Manager asks to locate the script and saves the chosen path.") : (path ? "Configured file takes precedence over the built-in action: " + path + ". If the target cannot be started, the built-in action runs." : entry.flow)});
+    }
+    {
+      var custom_by_chord = {};
+      for (i=0; i<records.length; i++)
+      {
+        var custom = records[i];
+        custom_by_chord[hotkeyIndexNormalChord(custom.shortcut)] = custom;
+        custom.status = "User defined";
+        custom.when = "PowerKeys / AHK";
+      }
+      for (i=0; i<keyboard_windows_shortcuts.length; i++)
+      {
+        var win = keyboard_windows_shortcuts[i];
+        var chord_key = hotkeyIndexNormalChord(win.shortcut);
+        var overriding = custom_by_chord[chord_key];
+        if (overriding)
+        {
+          overriding.windows_override = win.name;
+          overriding.when = "Overrides Windows: " + win.name;
+          overriding.metadata = "Overrides Windows default: " + win.name + " (" + win.summary + "). Native Windows action is not forwarded when the resident hotkey captures this chord.";
+          // The original Windows action is displayed in metadata, not run or duplicated in the flow.
+          continue;
+        }
+        records.push({id:"windows:"+chord_key, shortcut:hotkeyIndexReadableChord(win.shortcut),
+          name:win.name,modifiers:null,when:"Windows 11",status:"Default",summary:win.summary,
+          flow:win.summary + ". Read-only Windows reference; behaviour can vary by configuration."});
+      }
+    }
+    return records;
+  }
+  if (profile !== "max") { return []; }
+  var factory = typeof bundled_max_defaults === "undefined" ? [] : bundled_max_defaults.defaults;
+  var overlay = typeof bundled_max_hsx === "undefined" ? {assignments:[],removals:[]} : bundled_max_hsx;
+  var list = hotkeyIndexMergeMax(factory,overlay);
+  for (i=0;i<list.length;i++)
+  {
+    var item = list[i];
+    var extra = metadata[hotkeyIndexNormalId(item.id)] || {};
+    var table = extra.action_table || item.action_table || "";
+    var context = extra.context || item.context || "";
+    var category = extra.category || item.category || "";
+    var description = extra.description || "";
+    records.push({id:"max:" + i,shortcut:item.shortcut || hotkeyIndexFormat(item),modifiers:item.modifiers,name:item.name,
+      when:table || context || category || "Unclassified", context:context, action_table:table, category:category,
+      status:item.origin === "Custom" ? "User defined" : "Default",
+      summary:description || "3ds Max action ID: " + (item.id || "(unavailable)"),
+      metadata:"Context: " + (context || "unknown") + " | Action table: " + (table || "unknown") + " | Category: " + (category || "unknown"),
+      flow:(description ? description + ". " : "") + "Action ID: " + (item.id || "(unavailable)") + ". Read-only 3ds Max reference, not a global Windows hotkey."});
+  }
+  return records;
+}
+
+function hotkeyIndexSetProfile()
+{
+  hotkey_index_profile = document.getElementById("indexProfile").value === "max" ? "max" : "windows";
+  hotkey_index_page = 0;
+  hotkey_index_selected_id = "";
+  if (document.getElementById("indexContextFilter")) {document.getElementById("indexContextFilter").value="";}
+  hotkeyIndexRefresh();
+}
+function hotkeyIndexFilter()
+{
+  hotkey_index_page = 0;
+  hotkey_index_selected_id = "";
+  hotkeyIndexRender();
+}
+function hotkeyIndexPage(delta)
+{
+  hotkey_index_page += delta;
+  hotkeyIndexRender();
+}
+function hotkeyIndexRefresh()
+{
+  if (hotkey_index_profile === "max") {hotkey_index_max_metadata=hotkeyIndexLoadMaxMetadata();}
+  hotkey_index_rows = hotkeyIndexRecords(hotkey_index_profile);
+  hotkeyIndexPopulateContextFilter();
+  hotkeyIndexRender();
+}
+function hotkeyIndexSelect(id)
+{
+  hotkey_index_selected_id = id;
+  hotkeyIndexRender();
+}
+function hotkeyIndexRender()
+{
+  var search = document.getElementById("indexSearch").value.toLowerCase().replace(/^\s+|\s+$/g, "");
+  var context_filter = hotkey_index_profile !== "max" ? "" : document.getElementById("indexContextFilter").value;
+  var items = [];
+  for (var i=0;i<hotkey_index_rows.length;i++)
+  {
+    var r = hotkey_index_rows[i];
+    if (search && (r.shortcut + " " + r.name + " " + r.when + " " + r.status + " " + r.summary + " " + (r.windows_override || "") + " " + (r.context || "") + " " + (r.action_table || "") + " " + (r.category || "")).toLowerCase().indexOf(search) < 0) {continue;}
+    if (!hotkeyIndexMatchesContext(r, context_filter)) {continue;}
+    items.push(r);
+  }
+  var pages = Math.max(1, Math.ceil(items.length / hotkey_index_page_size));
+  if (hotkey_index_page >= pages) {hotkey_index_page = pages-1;}
+  if (hotkey_index_page < 0) {hotkey_index_page = 0;}
+  var body = document.getElementById("indexBody");
+  while (body.firstChild) {body.removeChild(body.firstChild);}
+  var start = hotkey_index_page * hotkey_index_page_size;
+  var has_selection = false;
+  for (var si=0;si<items.length;si++) {if (items[si].id === hotkey_index_selected_id) {has_selection=true;break;}}
+  if (!has_selection) {hotkey_index_selected_id = items.length ? (items[start] || items[0]).id : "";}
+  for (var k=start;k<Math.min(start + hotkey_index_page_size,items.length);k++)
+  {
+    var item = items[k];
+    var row = document.createElement("tr");
+    row.className = "item" + (item.id === hotkey_index_selected_id ? " chosen" : "");
+    var fields=[item.shortcut,item.name,item.when,item.status];
+    for (var c=0;c<fields.length;c++)
+    {
+      var cell=document.createElement("td");
+      cell.innerText=fields[c];
+      if (c===0)
+      {
+        cell.className="shortcut";
+        var swatch=document.createElement("span");
+        swatch.className="modifier-swatch";
+        var rgb=item.modifiers ? keyboardModifierDisplayUnionColor([item.modifiers]) : keyboardModifierDisplayColorForShortcut(item.shortcut);
+        if (!rgb) {rgb="#D7A94F";}
+        swatch.style.backgroundColor=rgb;
+        cell.insertBefore(swatch,cell.firstChild);
+        cell.title=fields[c]+" | Modifier colour: "+rgb;
+      }
+      else {cell.title=fields[c];}
+      if (c===2 && item.windows_override) {cell.className="override-context";}
+      if (c===3) {cell.className="status";}
+      row.appendChild(cell);
+    }
+    row.onclick=(function(row_id){return function(){hotkeyIndexSelect(row_id);};})(item.id);
+    body.appendChild(row);
+  }
+  document.getElementById("indexCount").innerText = items.length + " of " + hotkey_index_rows.length + " hotkeys";
+  document.getElementById("indexPageStatus").innerText="Page " + (hotkey_index_page+1) + " / " + pages;
+  document.getElementById("indexPrevious").disabled=hotkey_index_page<=0;
+  document.getElementById("indexNext").disabled=hotkey_index_page>=pages-1;
+  var selected=null;
+  for (var j=0;j<items.length;j++) {if(items[j].id===hotkey_index_selected_id){selected=items[j];break;}}
+  if (!selected && items.length) {selected=items[start] || items[0];hotkey_index_selected_id=selected.id;}
+  document.getElementById("indexDetailName").innerText=selected ? selected.name + "  |  " + selected.shortcut : "No matching hotkeys";
+  document.getElementById("indexDetailMetadata").innerText=selected ? (selected.metadata || selected.when) : "";
+  document.getElementById("indexDetailMetadata").className="detail-metadata" + (selected && selected.windows_override ? " override-context" : "");
+  document.getElementById("indexDetailFlow").innerText=selected ? (selected.flow || selected.summary) : "Try a different search or context filter.";
+}
+function hotkeyIndexOpenEditor()
+{
+  try
+  {
+    var fs=new ActiveXObject("Scripting.FileSystemObject");
+    var path=unescape(window.location.pathname).replace(/\//g,"\\");
+    if (/^\\[A-Za-z]:/.test(path)) {path=path.substr(1);}
+    var target=fs.BuildPath(fs.GetParentFolderName(fs.GetParentFolderName(path)),"Keyboard-Setup-Design-Options.hta");
+    if (!fs.FileExists(target)) {window.alert("Editor not found: " + target);return;}
+    var windows_shell = new ActiveXObject("WScript.Shell");
+    if (windows_shell.AppActivate("Keyboard Setup")) {return;}
+    windows_shell.Run('mshta.exe "' + target + '"',1,false);
+  }
+  catch (error) {window.alert("Unable to open editor: " + error.message);}
+}
+function hotkeyIndexInitialize()
+{
+  var width=1080,height=900,scale=1;
+  if (typeof screen !== "undefined" && screen.availWidth && screen.availHeight)
+  {
+    width=Math.min(width,screen.availWidth);
+    height=Math.min(height,screen.availHeight);
+    scale=Math.min(1,width/1080,height/900);
+  }
+  window.resizeTo(width,height);
+  var root=document.getElementById("root");
+  root.style.zoom=scale;
+  document.title="Keyboard Hotkey Index v" + hotkey_index_version;
+  document.getElementById("indexVersion").innerText="v" + hotkey_index_version;
+  hotkeyIndexRefresh();
+  window.onfocus=hotkeyIndexRefresh;
+}
+</script>
+</head>
+<body>
+<div id="root">
+  <h1>Hotkey Index <span id="indexVersion" style="color:#7f9fbe;font-size:12px;font-weight:400;"></span></h1>
+  <div class="sub">One effective shortcut list per program. Default actions are overridden by your user-defined shortcuts.</div>
+  <div class="controls">
+    <div><label for="indexProfile">PROFILE</label><select id="indexProfile" onchange="hotkeyIndexSetProfile()"><option value="windows">Windows (Default + User defined)</option><option value="max">3ds Max (Default + User defined)</option></select></div>
+    <div><label for="indexSearch">SEARCH HOTKEY OR ACTION</label><input id="indexSearch" type="text" placeholder="Shortcut, action, context..." onkeyup="hotkeyIndexFilter()" /></div>
+    <div><label>&nbsp;</label><button class="btn-wide" onclick="hotkeyIndexRefresh()">Refresh</button></div>
+  </div>
+  <div class="context-tools" id="indexContextTools"><div class="context-select"><label for="indexContextFilter">3DS MAX CONTEXT / ACTION TABLE / CATEGORY</label><select id="indexContextFilter" onchange="hotkeyIndexContextChanged()"><option value="">All 3ds Max hotkeys</option></select></div><div class="context-status" id="indexMetadataStatus">Run the 3ds Max metadata importer to enable context filters.</div></div>
+  <div class="headline"><span id="indexCount">0 hotkeys</span><span>Click an action to see its behaviour</span></div>
+  <div class="tableframe"><table><thead><tr><th style="width:165px">Shortcut</th><th style="width:395px">Action</th><th style="width:250px">Context / table</th><th>Status</th></tr></thead><tbody id="indexBody"></tbody></table></div>
+  <div class="pager"><span id="indexPageStatus">Page 1 / 1</span><span><button id="indexPrevious" onclick="hotkeyIndexPage(-1)">Prev</button><button id="indexNext" onclick="hotkeyIndexPage(1)">Next</button></span></div>
+  <div class="details"><div id="indexDetailName" class="detail-name">Select a hotkey</div><div id="indexDetailMetadata" class="detail-metadata"></div><div id="indexDetailFlow" class="detail-flow"></div></div>
+  <div class="bottom"><span>Windows includes 21 resident PowerKeys / AHK actions. 3ds Max is a read-only imported reference.</span><span><button onclick="hotkeyIndexOpenEditor()">Keyboard editor</button><button onclick="window.close()">Close</button></span></div>
+</div>
+<script language="javascript">hotkeyIndexInitialize();</script>
+</body>
+</html>

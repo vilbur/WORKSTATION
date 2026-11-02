@@ -1,0 +1,35 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const source = fs.readFileSync('Keyboard-Setup-Launcher.ahk', 'utf8');
+const toolkit = fs.readFileSync('src/Keyboard-Setup-Toolkit-Actions.ahk', 'utf8');
+const context = {};
+vm.runInNewContext(fs.readFileSync('data/Keyboard-Setup-Catalog.js','utf8'),context);
+const imported=context.keyboard_shortcut_catalog.filter(x=>x.source==='AutoHotkey Toolkit');
+assert.equal(imported.length,14);
+assert.equal(context.keyboard_shortcut_catalog.length,21);
+assert.match(source,/src\\Keyboard-Setup-Toolkit-Actions\.ahk/);
+const action_paths = new Map([...source.matchAll(/paths\["([^"]+)"\] := "([^"]+)"/g)].map(x => [x[1], x[2]]));
+for(const item of imported){
+  const mods=item.modifiers || [];
+  let ahk=(mods.includes('Ctrl')?'^':'')+(mods.includes('Shift')?'+':'')+(mods.includes('Alt')?'!':'')+(mods.includes('Win')?'#':'')+item.key.toLowerCase();
+  if (item.key === 'F4' || item.key === 'Pause' || item.key === 'Space' || item.key === 'Enter') ahk = ahk.slice(0,-item.key.length)+item.key;
+  const escaped=ahk.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const code = [...mods, item.key].join('+');
+  assert.ok(source.includes(ahk+'::\nkeyboardPublishShortcut("'+code+'")\nkeyboardLaunchAction("'+code+'")'), item.name+' trigger is registered and reported');
+  const action_path = action_paths.get(code);
+  assert.ok(action_path, item.name+' has a local launch file');
+  const wrapper = fs.readFileSync(action_path.replace(/\\/g,'/'),'utf8');
+  assert.ok(wrapper.includes(item.default_file),item.name+' path must exist in its own wrapper');
+  assert.ok(wrapper.includes('keyboardRunToolkitAction("'+code+'",'),item.name+' uses common external runner');
+  assert.ok(!/^([A-Z]:\\|[a-z]:\\)/.test(item.name));
+}
+assert.match(toolkit,/FileSelectFile, target/);
+assert.match(toolkit,/Keyboard-Setup-Toolkit-Paths\.ini/);
+assert.match(toolkit,/keyboardToolkitV1Interpreter/);
+assert.match(toolkit,/keyboardRunToolkitAction\(chord, default_target := ""\)/, 'wrapper supplies editable default');
+assert.match(toolkit,/keyboardRunToolkitAction\(chord, default_target := ""\)/, 'legacy resident can call the helper with one argument during partial Drive sync');
+assert.match(toolkit,/keyboardToolkitDefaults\(\)/, 'legacy defaults remain available solely as a sync fallback');
+assert.match(fs.readFileSync('Keyboard-Setup-Design-Options.hta','utf8'),/id="defaultFileHint"/, 'editor identifies the original execution path');
+assert.doesNotMatch(fs.readFileSync('src/Keyboard-Setup-Hotkey-Index.hta','utf8'),/AutoHotkey Toolkit \(14\)<\/option>/, 'Toolkit actions are merged into Windows source');
+console.log('PASS: 14 Toolkit hotkeys, paths, v1 execution, and Browse fallback');

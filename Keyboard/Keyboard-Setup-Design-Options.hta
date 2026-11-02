@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>Keyboard Setup - Design Options</title>
+<HTA:APPLICATION
+  ID="keyboardSetup"
+  APPLICATIONNAME="Keyboard Setup Design Options"
+  BORDER="dialog"
+  CAPTION="yes"
+  ICON=""
+  MAXIMIZEBUTTON="no"
+  MINIMIZEBUTTON="yes"
+  SCROLL="no"
+  SINGLEINSTANCE="yes"
+  SYSMENU="yes"
+  WINDOWSTATE="normal" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #10151d; color: #e8edf5; font: 16px "Segoe UI", Arial, sans-serif; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.shell { height: 100vh; display: table; width: 100%; table-layout: fixed; }
+.rail { display: table-cell; vertical-align: top; position: relative; width: 210px; background: #151d28; border-right: 1px solid #293444; padding: 22px 14px; }
+.brand { font-size: 19px; font-weight: 700; line-height: 1.25; padding: 0 10px 24px; }
+.brand small { display: block; color: #8493a6; font-size: 13px; font-weight: 500; margin-top: 6px; letter-spacing: .08em; text-transform: uppercase; }
+.rail-label { margin: 8px 10px; color: #77869a; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.rail-item { border: 0; width: 100%; text-align: left; background: transparent; padding: 11px 10px; border-radius: 7px; color: #aeb9c8; }
+.rail-item.active, .rail-item:hover { background: #243246; color: #fff; }
+.rail-note { position: absolute; bottom: 20px; left: 22px; width: 175px; color: #8190a3; font-size: 13px; line-height: 1.5; }
+.main { display: table-cell; vertical-align: top; overflow: hidden; padding: 24px 30px; }
+.top { display: table; width: 100%; margin-bottom: 22px; }
+.top > div:first-child { display: table-cell; vertical-align: top; }
+h1 { margin: 0; font-size: 26px; font-weight: 650; }
+.sub { color: #9ba9ba; margin-top: 6px; }
+.draft { display: table-cell; text-align: right; vertical-align: top; border: 1px solid #69552a; color: #f1cf7e; background: #2b2519; border-radius: 20px; padding: 7px 11px; font-size: 13px; white-space: nowrap; }
+.options { margin-bottom: 18px; }
+.option { border: 1px solid #303d4f; background: #171f2a; border-radius: 8px; padding: 10px 13px; color: #aeb9c8; }
+.options .option { margin-right: 6px; }
+.option.active { border-color: #4b9cff; color: #fff; background: #1b2a3d; box-shadow: inset 0 -2px #4b9cff; }
+.view { display: none; }
+.view.active { display: block; }
+.card { background: #171f2a; border: 1px solid #2a3747; border-radius: 11px; padding: 18px; }
+.card h2 { margin: 0 0 13px; font-size: 17px; font-weight: 650; }
+.muted { color: #91a0b2; }
+.canvas-grid { display: table; width: 1940px; table-layout: fixed; border-spacing: 12px 0; margin-left: -12px; }
+.canvas-grid > div { display: table-cell; vertical-align: top; }
+.canvas-grid > div:last-child { width: 470px; height: 820px; overflow: hidden; }
+.keyboard-card { width: 1444px; height: 592px; overflow: hidden; }
+.keyboard-tools { margin: 0 0 10px; color: #aeb9c8; font-size: 14px; }
+.keyboard-tools label { margin-right: 8px; }
+.keyboard-tools input { vertical-align: middle; width: 180px; }
+.keyboard-stage { height: 375px; max-height: 375px; overflow: hidden; background: #10161f; border: 1px solid #344356; border-radius: 10px; padding: 4px 3px; }
+.keyboard { display: inline-block; width: 930px; zoom: 1.5; background: #10161f; border-radius: 10px; box-shadow: 0 7px 18px #080b10; }
+.keyrow { margin-bottom: 5px; white-space: nowrap; }
+.key { height: 32px; min-width: 36px; border: 1px solid #48576a; border-radius: 5px; background: linear-gradient(#303c4b,#222d3a); box-shadow: 0 2px #10151c; padding: 0 5px; font-size: 10px; color: #dbe4ef; }
+.keyrow .key { margin-right: 3px; }
+.key:hover { border-color: #70b1ff; background: #30445c; }
+.key.selected { border-color: #56a3ff; background: #245e9e; color: white; box-shadow: 0 0 0 2px #3988df55; }
+.key.assigned { border-color: #d7a94f; box-shadow: 0 0 0 1px #d7a94f55; }
+/* Original full-key highlighted/glowing keycap style, tinted with computed RGB. */
+.key.shortcut-match { color:#fff; }
+.key.modifier-active { color:#fff; }
+.key.selected { border-color:#56a3ff; background:#245e9e; color:#fff; box-shadow:0 0 0 2px #3988df55; }
+/* Action monitor occupies the otherwise unused space below the 592px keyboard. */
+.keyboard-column { width: 1444px; }
+.shortcut-monitor { width: 900px; max-width: 94%; height: 138px; margin: 36px auto 0; padding: 18px 28px; border: 1px solid #37506b; border-radius: 12px; background: linear-gradient(#1c2939, #14202c); text-align: center; box-shadow: 0 8px 22px #080e1733; }
+.shortcut-monitor.active { border-color: #e89848; box-shadow: 0 0 0 1px #e8984833, 0 8px 22px #080e1755; }
+.shortcut-monitor .monitor-label { font-size: 12px; letter-spacing: .13em; color: #d6a268; text-transform: uppercase; margin-bottom: 8px; }
+.shortcut-monitor .monitor-action { font-size: 23px; line-height: 1.35; color: #fff4e6; font-weight: 650; }
+.shortcut-monitor .monitor-description { font-size: 14px; line-height: 1.55; color: #b5c7da; margin: 6px auto 0; max-width: 800px; }
+.keyboard-feedback { display: table; width: 100%; margin: 8px 0 10px; color: #9ba9ba; font-size: 13px; }
+.keyboard-feedback > span { display: table-cell; vertical-align: middle; }
+.keyboard-feedback > span:last-child { text-align: right; color: #dce8f5; }
+.legend-dot { display:inline-block; width:18px; height:18px; vertical-align:middle; border:1px solid #ABB7C6; border-radius:2px; margin:0 5px 0 12px; background:#000000; }
+.legend-dot:first-child { margin-left:0; }
+.modifier-legend { white-space:nowrap; font-size: 12px; }
+.modifier-legend .legend-item { display:inline-block; white-space:nowrap; margin-right:6px; }
+.modifier-legend .legend-dot { margin-left:3px; margin-right:5px; }
+.modifier-status { white-space:nowrap; font-size: 12px; }
+.modifier-status .legend-dot { margin-left:10px; }
+.modifier-hex { font-weight:600; color:#DDE8F5; margin-right:10px; }
+.key.wide { min-width: 61px; }.key.xwide { min-width: 85px; }.key.space { min-width: 285px; }.key.tall { height: 69px; }
+.key.return-tall { width: 36px; min-width: 36px; height: 69px; padding: 0 2px; vertical-align: top; white-space: normal; font-size: 8px; line-height: 1.2; }
+.key.enter-horizontal { width: 75px; min-width: 75px; height: 32px; }
+/* The five typing rows finish at the original 2x1 Enter edge. */
+.key.rshift { width: 96px; min-width: 96px; }
+.key.backspace-align { width: 67px; min-width: 67px; }
+.key.backslash-align { width: 54px; min-width: 54px; }
+/* Match the narrower left Tab / Caps, and align right Ctrl with Enter. */
+.key.main-tab { width: 49px; min-width: 49px; }
+.key.caps-lock { width: 67px; min-width: 67px; }
+.key.right-ctrl { width: 52px; min-width: 52px; }
+.keyrow.enter-row { margin-top: 0; }
+.numpad .keyrow.return-bottom-row { margin-top: -37px; }
+.numpad .keyrow.plus-following-row { margin-top: -37px; }
+.numpad .key.num-plus { height: 69px; vertical-align: top; }
+.numpad .key.num-zero { width: 75px; min-width: 75px; }
+.tab-icon { display: inline-block; width: 15px; height: 11px; position: relative; border: 1px solid #dbe4ef; border-radius: 2px; vertical-align: middle; }
+.tab-icon:before { content: ""; position: absolute; left: 3px; top: 4px; width: 7px; border-top: 1px solid #dbe4ef; }
+.tab-icon:after { content: ""; position: absolute; right: 2px; top: 2px; width: 4px; height: 4px; border-top: 1px solid #dbe4ef; border-right: 1px solid #dbe4ef; transform: rotate(45deg); }
+.kbd-top, .kbd-body { display: table; width: 100%; }
+.kbd-top .function-zone { display: table-cell; vertical-align: top; }
+/* Header belongs to the navigation block, not the F-key table: PrntScrn aligns with Ins. */
+.navpad .nav-header { position: absolute; top: -37px; left: 2.6px; width: 122px; }
+.navpad .nav-header .keyrow { text-align: right; padding-top: 0; }
+.navpad .nav-header .keyrow .key { vertical-align: top; }
+/* Anchor the Print Screen caption to the keycap's bottom-left corner. */
+.key.nav-print-screen { position: relative; font-size: 7px; padding: 0 1px; letter-spacing: -0.45px; text-align: left; }
+.key.nav-print-screen .key-bottom-left { position: absolute; left: 2px; bottom: 2px; line-height: 1; white-space: nowrap; }
+.alpha { display: table-cell; vertical-align: top; }.sidekeys { display: table-cell; vertical-align: top; width: 290px; padding-left: 8px; white-space: nowrap; }.navpad, .numpad { display: inline-block; vertical-align: top; }
+/* Centre the navigation block between typing keys and numpad: half-key visible gaps. */
+.navpad { position: relative; left: -25px; width: 122px; margin-right: 11px; }
+.numpad { position: relative; left: -25px; width: 156px; }
+.navpad .keyrow { text-align: right; }.navpad .arrow-top { text-align: center; margin-top: 42px; }.navpad .arrow-bottom { text-align: right; }
+.binding { background: #1c2734; border: 1px solid #304258; border-radius: 8px; padding: 15px; margin-top: 14px; }
+.binding-head { display: table; width: 100%; margin-bottom: 10px; }
+.binding-head > span { display: table-cell; vertical-align: middle; }.binding-head > span:last-child { text-align: right; }
+.combo { display: inline-block; border: 1px solid #4c6076; background: #101720; border-radius: 5px; padding: 5px 8px; font-weight: 650; color: #fff; }
+.combo-choice { cursor: pointer; margin-right: 5px; }
+.combo-choice.active { border-color: #6bb2ff; background: #214267; }
+.command-details { display: none; }
+.command-details.active { display: block; }
+.editor { margin-top: 8px; padding-top: 8px; border-top: 1px solid #344253; }
+.editor-title { display: table; width: 100%; margin-bottom: 10px; }
+.editor-title > span { display: table-cell; vertical-align: middle; }
+.editor-title > span:last-child { text-align: right; color: #8fbfff; font-size: 13px; }
+.editor label { display: block; color: #9ba9ba; font-size: 13px; margin: 6px 0 2px; }
+.editor input, .editor select { width: 100%; border: 1px solid #435368; border-radius: 6px; background: #101720; color: #e8edf5; padding: 6px; font: inherit; }
+.editor input[readonly] { color: #8fbfff; }
+.action-description { min-height: 31px; margin: 6px 0 2px; padding: 6px 9px; border-left: 2px solid #4b9cff; background: #101a27; color: #b4c6d9; font-size: 13px; line-height: 1.45; }
+.windows-override-note { display: none; margin: 7px 0 3px; padding: 7px 9px; border-left: 3px solid #e8a24c; background: #2a241b; color: #f2c58d; font-size: 13px; line-height: 1.35; }
+.editor .browse-line { display: table; width: 100%; table-layout: fixed; }
+.editor .browse-line input { display: table-cell; width: 100%; }
+.editor .browse-line button { display: table-cell; width: 79px; margin-left: 5px; }
+.import-tools { padding: 0 0 8px; border-bottom: 1px solid #344253; }
+.import-tools select { display: block; width: 100%; margin: 6px 0; color: #e8edf5; background: #101720; border: 1px solid #435368; }
+.import-tools button { font-size: 13px; padding: 5px 7px; }
+.import-tools .hint { display: block; margin-top: 5px; }
+.hidden-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.editor-actions { margin-top: 8px; display: flex; gap: 7px; flex-wrap: wrap; }
+.editor-actions .btn { padding: 7px 9px; font-size: 13px; }
+.binding-overview { margin-top: 10px; padding-top: 9px; border-top: 1px solid #344253; }
+.binding-overview h3 { margin: 0 0 6px; font-size: 14px; }
+.overview-row { display: table; width: 100%; border-top: 1px solid #2c3948; padding: 4px 0; }
+.overview-row > span { display: table-cell; vertical-align: middle; }
+.overview-row > span:last-child { text-align: right; color: #9ba9ba; font-size: 13px; }
+.overview-choice { border: 1px solid #4c6076; background: #101720; border-radius: 5px; padding: 4px 7px; color: #fff; font-size: 12px; cursor: pointer; }
+.overview-choice.match { outline: 1px solid #E3E9F1; }
+.empty-overview { color: #8493a6; font-size: 13px; padding: 8px 0; }
+/* The preview and factory catalogs use pages, not a 575-row scrolling panel. */
+.overview-search { width: 100%; margin: 2px 0 6px; padding: 6px 8px; background: #101720; color: #e8edf5; border: 1px solid #435368; border-radius: 5px; }
+.overview-pager { display: table; width: 100%; margin-top: 6px; font-size: 13px; color: #91a0b2; }
+.overview-pager > span { display: table-cell; vertical-align: middle; }
+.overview-pager > span:last-child { text-align: right; white-space: nowrap; }
+.overview-pager button { background: #243347; color: #e8edf5; border: 1px solid #435469; border-radius: 4px; padding: 3px 9px; margin-left: 4px; }
+.overview-pager button:disabled { opacity: .4; cursor: default; }
+
+.tag { color: #8fbfff; font-size: 13px; }.action-row { padding: 8px 0; border-top: 1px solid #2c3948; color: #c8d2df; font-size: 14px; }
+.action-row b { display: inline-block; color: #fff; width: 90px; }
+.btn { border: 1px solid #435469; background: #243347; border-radius: 6px; padding: 8px 11px; }
+.btn.primary { color: #08111b; background: #69b0ff; border-color: #69b0ff; font-weight: 650; }
+.btn:hover { filter: brightness(1.13); }
+.toolbar { display: table; width: 100%; margin: 16px 0; }
+.toolbar > span, .toolbar > button { display: table-cell; vertical-align: middle; }.toolbar > button { text-align: center; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { text-align: left; color: #8f9daf; font-weight: 500; padding: 10px; border-bottom: 1px solid #344253; }
+.table td { padding: 12px 10px; border-bottom: 1px solid #293543; }
+.table tr.selected-row { background: #1d2c3e; }
+.table .combo { font-size: 13px; }
+.two-col { display: table; width: 100%; border-spacing: 12px 0; margin-left: -12px; }
+.two-col > div { display: table-cell; vertical-align: top; width: 50%; }
+.key-pair { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 30px; background: #10161f; border-radius: 9px; }
+.key-big { display: flex; align-items: center; justify-content: center; min-width: 105px; height: 75px; border: 1px solid #506178; border-radius: 10px; background: #273443; font-size: 21px; font-weight: 650; }
+.arrow { font-size: 26px; color: #69b0ff; }
+.field { width: 100%; padding: 9px; color: #e8edf5; background: #101720; border: 1px solid #435368; border-radius: 6px; }
+.hint { font-size: 13px; color: #8493a6; line-height: 1.5; }
+.footer { display: table; width: 100%; margin-top: 15px; color: #8493a6; font-size: 13px; }
+.footer > span, .footer > button { display: table-cell; vertical-align: middle; }.footer > span:last-child { text-align: right; }
+/* Narrow displays are handled by scaling the fixed-layout shell to the screen work area. */
+
+/* 3ds Max importer is isolated from the keyboard canvas. */
+.max-import-backdrop { display:none; position:fixed; left:0; top:0; right:0; bottom:0; z-index:20; background:rgba(0,0,0,.68); }
+.max-import-panel { width:1010px; max-width:94%; margin:45px auto 0; border:1px solid #3c536c; border-radius:8px; background:#17212e; padding:24px; box-shadow:0 12px 36px #050911; overflow:hidden; }
+.max-import-panel h2 { margin:0 0 10px; }
+.max-import-row { margin:14px 0; }
+.max-import-row label { display:block; margin-bottom:5px; font-size: 14px; color:#9fb4ca; }
+.max-import-line { display:table; width:100%; table-layout:fixed; border-spacing:0; }
+.max-import-line input { display:table-cell; width:100%; color:#e8edf5; background:#111925; border:1px solid #445771; padding:8px; border-radius:4px; }
+.max-import-line button { display:table-cell; margin-left:5px; }
+.max-import-actions { margin-top:17px; }
+.max-import-actions button { margin-right:8px; }
+#maxImportMessage { min-height:32px; color:#9cb6d4; font-size: 14px; line-height:1.5; }
+</style>
+<script language="javascript" src="data/Keyboard-Setup-Modifier-Colors.js"></script>
+<script language="javascript" src="data/Keyboard-Setup-Catalog.js"></script>
+<script language="javascript" src="data/Keyboard-Setup-Windows.js"></script>
+<script language="javascript" src="data/Keyboard-Setup-Max-Defaults.js"></script>
+<script language="javascript" src="data/Keyboard-Setup-Max-Preset.js"></script>
+<script language="javascript" src="import/3DsMax/3DsMax-Importer.js"></script>
+<script language="javascript">
+var keyboard_setup_version = "0.32";
+/* Compatibility fallback: Google Drive may sync the HTA before the shared
+   modifier module. Legacy v0.22 files also lack keyboardModifierUnionColor.
+   Keep exact additive RGB semantics even in either partial-sync state. */
+if (typeof keyboardModifierRgb !== "function" ||
+    typeof keyboardModifierColor !== "function" ||
+    typeof keyboardModifierUnionColor !== "function" ||
+    typeof keyboardModifierColorForShortcut !== "function")
+{
+  keyboardModifierRgb = function(states)
+  {
+    function channel(on) { return on ? "FF" : "00"; }
+    return "#" + channel(states.Ctrl || states.Alt) +
+      channel(states.Shift || states.Alt) + channel(states.Win || states.Alt);
+  };
+  keyboardModifierColor = function(modifiers)
+  {
+    var states = {Ctrl:false, Shift:false, Win:false, Alt:false};
+    if (modifiers && typeof modifiers.length === "number")
+    {
+      for (var i=0; i<modifiers.length; i++)
+      {
+        if (states.hasOwnProperty(modifiers[i])) { states[modifiers[i]] = true; }
+      }
+    }
+    else if (modifiers)
+    {
+      states.Ctrl = !!modifiers.Ctrl;
+      states.Shift = !!modifiers.Shift;
+      states.Win = !!modifiers.Win;
+      states.Alt = !!modifiers.Alt;
+    }
+    return keyboardModifierRgb(states);
+  };
+  keyboardModifierUnionColor = function(modifier_sets)
+  {
+    var states = {Ctrl:false, Shift:false, Win:false, Alt:false};
+    for (var i=0; i<modifier_sets.length; i++)
+    {
+      var mods = modifier_sets[i] || [];
+      for (var j=0; j<mods.length; j++)
+      {
+        if (states.hasOwnProperty(mods[j])) { states[mods[j]] = true; }
+      }
+    }
+    return keyboardModifierRgb(states);
+  };
+  keyboardModifierColorForShortcut = function(shortcut)
+  {
+    var parts = String(shortcut || "").split("+");
+    var mods = [];
+    for (var i=0; i<parts.length-1; i++)
+    {
+      var name = parts[i].replace(/^\s+|\s+$/g, "");
+      if (name === "Ctrl" || name === "Shift" || name === "Win" || name === "Alt")
+      { mods.push(name); }
+    }
+    if (/"/.test(parts[parts.length-1]) && mods.indexOf("Ctrl") >= 0 && mods.indexOf("Shift") < 0)
+    { mods.push("Shift"); }
+    return keyboardModifierColor(mods);
+  };
+}
+
+
+/* If Drive synced the HTA before the colour module, replace an older palette.
+   Keep the display identical with or without the updated shared file. */
+if (typeof keyboard_modifier_display_palette_version === "undefined" ||
+    keyboard_modifier_display_palette_version < 26 ||
+    typeof keyboardModifierDisplayUnionColor !== "function")
+{
+  keyboard_modifier_display_palette_version = 26;
+  
+  function keyboardModifierSoftenColor(raw_hex)
+  {
+    var palette = {
+      "#000000":"#000000",
+      "#FF0000":"#F16D77",
+      "#00FF00":"#66DC76",
+      "#0000FF":"#55B8F6",
+      "#FFFF00":"#E7D451",
+      "#FF00FF":"#D875E9",
+      "#00FFFF":"#56DDE2",
+      "#FFFFFF":"#A779D8"
+    };
+    return palette[String(raw_hex || "").toUpperCase()] || "#000000";
+  }
+  
+  /* Resolve Alt to white ONLY when Alt is the sole modifier in a status/swatch.
+     For combined shortcuts, preserve the visible Ctrl/Shift/Win mixture. */
+  function keyboardModifierDisplayColor(modifiers)
+  {
+    var states = { Ctrl:false, Shift:false, Win:false, Alt:false };
+    if (modifiers && typeof modifiers.length === "number")
+    {
+      for (var i=0; i<modifiers.length; i++)
+      {
+        if (states.hasOwnProperty(modifiers[i])) { states[modifiers[i]] = true; }
+      }
+    }
+    else if (modifiers)
+    {
+      states.Ctrl = !!modifiers.Ctrl;
+      states.Shift = !!modifiers.Shift;
+      states.Win = !!modifiers.Win;
+      states.Alt = !!modifiers.Alt;
+    }
+    if (states.Alt && !states.Ctrl && !states.Shift && !states.Win)
+    { return "#FFFFFF"; }
+    return keyboardModifierSoftenColor(keyboardModifierRgb({
+      Ctrl:states.Ctrl, Shift:states.Shift, Win:states.Win, Alt:false
+    }));
+  }
+  
+  /* Keycaps never receive a white overlay merely because an assignment uses Alt.
+     An Alt-only binding keeps the neutral assigned-key styling. */
+  function keyboardModifierDisplayUnionColor(modifier_sets)
+  {
+    var active = { Ctrl:false, Shift:false, Win:false };
+    var found_alt = false;
+    for (var i=0; i<modifier_sets.length; i++)
+    {
+      var mods = modifier_sets[i] || [];
+      for (var j=0; j<mods.length; j++)
+      {
+        if (mods[j] === "Alt") { found_alt = true; }
+        else if (active.hasOwnProperty(mods[j])) { active[mods[j]] = true; }
+      }
+    }
+    if (found_alt && !active.Ctrl && !active.Shift && !active.Win)
+    { return ""; }
+    return keyboardModifierDisplayColor(active);
+  }
+  
+  function keyboardModifierDisplayColorForShortcut(shortcut)
+  {
+    var parts = String(shortcut || "").split("+");
+    var mods = [];
+    for (var i=0; i<parts.length-1; i++)
+    {
+      var name = parts[i].replace(/^\s+|\s+$/g, "");
+      if (name === "Ctrl" || name === "Shift" || name === "Win" || name === "Alt")
+      { mods.push(name); }
+    }
+    if (/"/.test(parts[parts.length-1]) && mods.indexOf("Ctrl") >= 0 && mods.indexOf("Shift") < 0)
+    { mods.push("Shift"); }
+    return keyboardModifierDisplayColor(mods);
+  }
+}
+
+var shortcut_bindings = keyboard_shortcut_catalog.slice(0);
+var physical_modifiers = { Ctrl: false, Shift: false, Alt: false, Win: false };
+var latched_modifiers = { Ctrl: false, Shift: false, Alt: false, Win: false };
+var editor_key = "";
+var editor_modifiers = [];
+var editing_binding_index = -1;
+var imported_max_defaults = typeof bundled_max_defaults === "undefined" ? [] : bundled_max_defaults.defaults;
+var imported_max_overlay = typeof bundled_max_hsx === "undefined" ? { assignments: [], removals: [] } : bundled_max_hsx;
+var imported_max_bindings = applyMaxOverlay(imported_max_defaults, imported_max_overlay);
+var imported_max_removals = imported_max_overlay.removals;
+/* Compare shortcuts by their physical keys, not the order of modifier names. */
+function keyboardNormalizeShortcut(chord)
+{
+  var parts = String(chord || "").replace(/\s+/g, "").split("+");
+  var key = parts.pop();
+  var mods = ["Ctrl", "Shift", "Alt", "Win"];
+  var sorted = [];
+  for (var i = 0; i < mods.length; i++)
+  {
+    for (var j = 0; j < parts.length; j++)
+    {
+      if (parts[j].toLowerCase() === mods[i].toLowerCase()) { sorted.push(mods[i]); break; }
+    }
+  }
+  sorted.push(key);
+  return sorted.join("+").toLowerCase();
+}
+
+/* Only report an override when this resident binding matches an actual Windows default. */
+function keyboardWindowsOverrideForChord(chord)
+{
+  var normalized = keyboardNormalizeShortcut(chord);
+  for (var win_index = 0; win_index < keyboard_windows_shortcuts.length; win_index++)
+  {
+    var windows_entry = keyboard_windows_shortcuts[win_index];
+    if (keyboardNormalizeShortcut(windows_entry.shortcut) === normalized) { return windows_entry; }
+  }
+  return null;
+}
+
+function keyboardUpdateWindowsOverrideNotice()
+{
+  var note = document.getElementById("windowsOverrideNotice");
+  if (!note) { return; }
+  note.style.display = "none";
+  note.innerText = "";
+  if (source_profile !== "windows" || editing_binding_index < 0) { return; }
+  var binding = shortcut_bindings[editing_binding_index];
+  if (!binding) { return; }
+  var original = keyboardWindowsOverrideForChord(bindingCode(binding));
+  if (!original) { return; }
+  note.innerText = "Overrides Windows default: " + original.name + ". The PowerKeys action takes priority; the native Windows action is not forwarded when the resident hotkey captures it.";
+  note.style.display = "block";
+}
+
+function keyboardMergedWindowsBindings()
+{
+  var result = [];
+  var custom_map = {};
+  var i, entry, key;
+  for (i = 0; i < shortcut_bindings.length; i++)
+  {
+    entry = shortcut_bindings[i];
+    key = keyboardNormalizeShortcut(bindingCode(entry));
+    custom_map[key] = true;
+    var windows_default = keyboardWindowsOverrideForChord(bindingCode(entry));
+    result.push({ key:entry.key,modifiers:entry.modifiers,name:entry.name,origin:"User defined",
+      shortcut:formatShortcut(entry.key,entry.modifiers),file_path:entry.file_path || "",summary:entry.summary || "Registered resident action",resident_index:i,
+      windows_override:windows_default ? windows_default.name : "" });
+  }
+  for (i = 0; i < keyboard_windows_shortcuts.length; i++)
+  {
+    entry = keyboard_windows_shortcuts[i];
+    key = keyboardNormalizeShortcut(entry.shortcut);
+    if (custom_map[key]) { continue; }
+    var parts = entry.shortcut.split("+");
+    var hotkey = parts.pop();
+    result.push({key:hotkey,modifiers:parts,name:entry.name,origin:"Default",shortcut:entry.shortcut,summary:entry.summary,resident_index:-1});
+  }
+  return result;
+}
+var source_profile = "windows";
+var overview_page = 0;
+var overview_page_size = 4;
+
+function showOption(name, button)
+{
+  var views = document.getElementsByClassName("view");
+  var options = document.getElementsByClassName("option");
+  var i;
+  for (i = 0; i < views.length; i++) { views[i].className = "view"; }
+  for (i = 0; i < options.length; i++) { options[i].className = "option"; }
+  document.getElementById(name).className = "view active";
+  button.className = "option active";
+}
+function selectKey(button)
+{
+  var keys = document.getElementsByClassName("key");
+  var i;
+  for (i = 0; i < keys.length; i++) { removeClass(keys[i], "selected"); }
+  addClass(button, "selected");
+  document.getElementById("selectedKey").innerText = button.innerText;
+}
+
+function addClass(element, class_name)
+{
+  if (!hasClass(element, class_name)) { element.className += " " + class_name; }
+}
+
+function removeClass(element, class_name)
+{
+  var expression = new RegExp("(^|\\s)" + class_name + "(?=\\s|$)", "g");
+  element.className = element.className.replace(expression, " ").replace(/^\s+|\s+$/g, "");
+}
+
+function hasClass(element, class_name)
+{
+  return (" " + element.className + " ").indexOf(" " + class_name + " ") >= 0;
+}
+
+function showBinding(name, button)
+{
+  var panels = document.getElementsByClassName("command-details");
+  var buttons = document.getElementsByClassName("combo-choice");
+  var i;
+  for (i = 0; i < panels.length; i++) { panels[i].className = "command-details"; }
+  for (i = 0; i < buttons.length; i++) { buttons[i].className = "combo combo-choice"; }
+  document.getElementById(name).className = "command-details active";
+  button.className = "combo combo-choice active";
+}
+function showNotice(text)
+{
+  window.alert(text);
+}
+
+function trimText(text)
+{
+  return String(text).replace(/^\s+|\s+$/g, "");
+}
+
+function getKeyLabel(button)
+{
+  var key_label = button.getAttribute("data-key");
+  if (!key_label) { key_label = trimText(button.innerText); }
+  return key_label;
+}
+
+function getActiveModifiers()
+{
+  var active_modifiers = [];
+  var modifier_order = ["Ctrl", "Shift", "Alt", "Win"];
+  var i;
+  for (i = 0; i < modifier_order.length; i++)
+  {
+    var modifier_name = modifier_order[i];
+    if (physical_modifiers[modifier_name] || latched_modifiers[modifier_name]) { active_modifiers.push(modifier_name); }
+  }
+  return active_modifiers;
+}
+
+function modifierNameFromKeyCode(key_code)
+{
+  if (key_code === 16) { return "Shift"; }
+  if (key_code === 17) { return "Ctrl"; }
+  if (key_code === 18) { return "Alt"; }
+  if (key_code === 91 || key_code === 92) { return "Win"; }
+  return "";
+}
+
+/* The 21 resident commands report activations through a small, user-local file.
+   The HTA only READS this event and never steals the focus of other applications. */
+var keyboard_action_last_serial = "";
+var keyboard_action_poll_handle = null;
+
+function keyboardActionChord(key_label, modifiers)
+{
+  var order = ["Ctrl", "Shift", "Alt", "Win"];
+  var parts = [];
+  for (var j = 0; j < order.length; j++)
+  {
+    if (modifiers.indexOf(order[j]) >= 0) { parts.push(order[j]); }
+  }
+  parts.push(key_label);
+  return parts.join("+");
+}
+
+function keyboardShowShortcutByParts(key_label, modifiers)
+{
+  var rows = getVisibleBindings();
+  var matched = [];
+  var i;
+  for (i = 0; i < rows.length; i++)
+  {
+    if (String(rows[i].key).toUpperCase() === String(key_label).toUpperCase()
+      && sameModifiers(rows[i].modifiers || [], modifiers)) { matched.push(rows[i]); }
+  }
+  if (!matched.length) { return false; }
+
+  var shortcut = formatShortcut(key_label, modifiers);
+  var name = "";
+  var description = "";
+  if (matched.length > 1)
+  {
+    name = matched.length + " actions share this shortcut";
+    var names = [];
+    for (i = 0; i < matched.length && i < 3; i++) { names.push(matched[i].name); }
+    description = names.join("  |  ") + (matched.length > 3 ? "  |  ..." : "")
+      + ". Which action runs depends on the 3ds Max context.";
+  }
+  else
+  {
+    var item = matched[0];
+    name = item.name || "Unnamed action";
+    if (source_profile === "global" || (source_profile === "windows" && item.origin === "User defined"))
+    {
+      if (item.file_path)
+      {
+        description = "Runs the assigned file: " + item.file_path;
+      }
+      else { description = item.summary || ""; }
+      if (source_profile === "windows" && item.windows_override)
+      {
+        description += "  |  Overrides Windows default: " + item.windows_override + ". Native Windows action is suppressed when the resident hotkey captures it.";
+      }
+    }
+    else
+    {
+      description = source_profile === "windows" ? (item.summary || "Windows shortcut reference") :
+        (item.category || item.context || item.action_table || "3ds Max keyboard action") + " (read-only shortcut reference).";
+    }
+  }
+  document.getElementById("shortcutMonitorShortcut").innerText = "SHORTCUT  /  " + shortcut;
+  document.getElementById("shortcutMonitorAction").innerText = name;
+  document.getElementById("shortcutMonitorDescription").innerText = description;
+  document.getElementById("shortcutMonitor").className = "shortcut-monitor active";
+  return true;
+}
+
+/* Keydown is a preview when the HTA is focused; it works for both Global and
+   3ds Max reference profiles. Actual 3ds Max execution is not monitored. */
+function keyboardShortcutKeyDown(event_object)
+{
+  var e = event_object || window.event;
+  var code = e.keyCode || e.which;
+  var key = "";
+  if (code >= 65 && code <= 90) { key = String.fromCharCode(code); }
+  else if (code >= 112 && code <= 123) { key = "F" + (code - 111); }
+  else if (code === 32) { key = "Space"; }
+  else if (code === 13) { key = "Enter"; }
+  else if (code === 19) { key = "Pause"; }
+  else if (code === 222) { key = "'"; }
+  else if (code >= 48 && code <= 57) { key = String.fromCharCode(code); }
+  if (!key) { return false; }
+  var modifiers = [];
+  var order = ["Ctrl", "Shift", "Alt", "Win"];
+  var flags = {Ctrl:!!e.ctrlKey, Shift:!!e.shiftKey, Alt:!!e.altKey, Win:!!e.metaKey};
+  for (var i = 0; i < order.length; i++)
+  {
+    var mod = order[i];
+    if (flags[mod] || physical_modifiers[mod] || latched_modifiers[mod]) { modifiers.push(mod); }
+  }
+  return keyboardShowShortcutByParts(key, modifiers);
+}
+
+/* The resident process emits 'Shortcut' then 'Serial'. Ignore a stale event
+   found when opening the editor, but show every new unique serial afterwards. */
+function keyboardConsumeRuntimeActionText(contents, initializing)
+{
+  var shortcut_match = /^Shortcut=([^\r\n]+)\s*$/mi.exec(contents);
+  var serial_match = /^Serial=([^\r\n]+)\s*$/mi.exec(contents);
+  if (!shortcut_match || !serial_match) { return false; }
+  var serial = trimText(serial_match[1]);
+  if (!serial || serial === keyboard_action_last_serial) { return false; }
+  keyboard_action_last_serial = serial;
+  if (initializing || (source_profile !== "global" && source_profile !== "windows")) { return false; }
+  var parts = trimText(shortcut_match[1]).split("+");
+  var key = parts.pop();
+  if (!key) { return false; }
+  return keyboardShowShortcutByParts(key, parts);
+}
+
+function keyboardPollRuntimeAction(initializing)
+{
+  if (typeof ActiveXObject === "undefined") { return; }
+  try
+  {
+    var shell = new ActiveXObject("WScript.Shell");
+    var fs = new ActiveXObject("Scripting.FileSystemObject");
+    var path = shell.ExpandEnvironmentStrings("%TEMP%") + "\\KeyboardSetupActionEvent.txt";
+    if (!fs.FileExists(path)) { return; }
+    var file = fs.OpenTextFile(path, 1, false, 0);
+    var contents = file.ReadAll();
+    file.Close();
+    keyboardConsumeRuntimeActionText(contents, initializing);
+  }
+  catch (read_error) { /* Missing or busy event file must never interrupt the editor. */ }
+}
+
+function handleModifierKeyDown(event_object)
+{
+  var current_event = event_object || window.event;
+  var modifier_name = modifierNameFromKeyCode(current_event.keyCode || current_event.which);
+  if (modifier_name)
+  {
+    physical_modifiers[modifier_name] = true;
+    updateKeyboardHighlights();
+  }
+  keyboardShortcutKeyDown(current_event);
+}
+
+function handleModifierKeyUp(event_object)
+{
+  var current_event = event_object || window.event;
+  var modifier_name = modifierNameFromKeyCode(current_event.keyCode || current_event.which);
+  if (modifier_name)
+  {
+    physical_modifiers[modifier_name] = false;
+    updateKeyboardHighlights();
+  }
+}
+
+function resetPhysicalModifiers()
+{
+  physical_modifiers.Ctrl = false;
+  physical_modifiers.Shift = false;
+  physical_modifiers.Alt = false;
+  physical_modifiers.Win = false;
+  updateKeyboardHighlights();
+}
+
+function sameModifiers(first_modifiers, second_modifiers)
+{
+  var modifier_order = ["Ctrl", "Shift", "Alt", "Win"];
+  var i;
+  for (i = 0; i < modifier_order.length; i++)
+  {
+    var modifier_name = modifier_order[i];
+    if ((first_modifiers.indexOf(modifier_name) >= 0) !== (second_modifiers.indexOf(modifier_name) >= 0)) { return false; }
+  }
+  return true;
+}
+
+/* Strict chord filter: holding Ctrl shows Ctrl-only actions, not Ctrl+Shift.
+   Without held modifiers the complete catalogue is still shown. */
+function usesActiveModifiers(binding_modifiers, active_modifiers)
+{
+  return active_modifiers.length > 0 && sameModifiers(binding_modifiers || [], active_modifiers);
+}
+
+function findBinding(key_label, modifiers)
+{
+  var i;
+  for (i = 0; i < shortcut_bindings.length; i++)
+  {
+    if (shortcut_bindings[i].key.toUpperCase() === key_label.toUpperCase() && sameModifiers(shortcut_bindings[i].modifiers, modifiers)) { return i; }
+  }
+  return -1;
+}
+
+function formatShortcut(key_label, modifiers)
+{
+  var shortcut_parts = [];
+  var modifier_order = ["Ctrl", "Shift", "Alt", "Win"];
+  var shifted_quote = key_label === "'" && modifiers.indexOf("Shift") >= 0;
+  var i;
+  for (i = 0; i < modifier_order.length; i++)
+  {
+    if (shifted_quote && modifier_order[i] === "Shift") { continue; }
+    if (modifiers.indexOf(modifier_order[i]) >= 0) { shortcut_parts.push(modifier_order[i]); }
+  }
+  shortcut_parts.push(shifted_quote ? '"' : key_label);
+  return shortcut_parts.join(" + ");
+}
+
+function bindingCode(binding)
+{
+  var result = [];
+  var order = ["Ctrl", "Shift", "Alt", "Win"];
+  for (var index = 0; index < order.length; index++)
+  {
+    if (binding.modifiers.indexOf(order[index]) >= 0) { result.push(order[index]); }
+  }
+  result.push(binding.key);
+  return result.join("+");
+}
+
+function getVisibleBindings()
+{
+  if (source_profile === "max") { return imported_max_bindings; }
+  if (source_profile === "windows") { return keyboardMergedWindowsBindings(); }
+  return shortcut_bindings;
+}
+
+function setSourceProfile(profile_name)
+{
+  source_profile = profile_name === "max" ? "max" : "windows";
+  overview_page = 0;
+  editing_binding_index = -1;
+  latched_modifiers = { Ctrl: false, Shift: false, Alt: false, Win: false };
+  if (document.getElementById("sourceProfile")) { document.getElementById("sourceProfile").value = source_profile; }
+  fillEditor();
+  updateKeyboardHighlights();
+}
+
+function parseMaxHotkeys(xml_document)
+{
+  var result = { assignments: [], removals: [] };
+  var definitions = [
+    { element: "Assign_Hotkey", output: result.assignments },
+    { element: "Unassign_Hotkey", output: result.removals }
+  ];
+  for (var type_index = 0; type_index < definitions.length; type_index++)
+  {
+    var elements = xml_document.getElementsByTagName(definitions[type_index].element);
+    for (var element_index = 0; element_index < elements.length; element_index++)
+    {
+      var element = elements[element_index];
+      var raw_shortcut = element.getAttribute("Shortcut") || "";
+      if (!raw_shortcut) { continue; }
+      var parts = raw_shortcut.split("+");
+      var modifiers = [];
+      var key_parts = [];
+      for (var part_index = 0; part_index < parts.length; part_index++)
+      {
+        if (parts[part_index] === "Ctrl" || parts[part_index] === "Shift" || parts[part_index] === "Alt" || parts[part_index] === "Win")
+        {
+          modifiers.push(parts[part_index]);
+        }
+        else { key_parts.push(parts[part_index]); }
+      }
+      definitions[type_index].output.push({
+        key: key_parts.join("+") || raw_shortcut,
+        modifiers: modifiers,
+        name: element.getAttribute("Description") || "Unnamed 3ds Max action",
+        action: "max_import",
+        id: element.getAttribute("Id") || "",
+        shortcut: raw_shortcut,
+        origin: definitions[type_index].element === "Assign_Hotkey" ? "Custom" : "Removed"
+      });
+    }
+  }
+  return result;
+}
+
+function parseMaxDefaultHotkeys(xml_document)
+{
+  var output = [];
+  var elements = xml_document.getElementsByTagName("Hotkey");
+  for (var element_index = 0; element_index < elements.length; element_index++)
+  {
+    var element = elements[element_index];
+    var shortcut = element.getAttribute("Shortcut") || "";
+    if (!shortcut) { continue; }
+    var parts = shortcut.split("+");
+    var modifiers = [];
+    var key_parts = [];
+    for (var part_index = 0; part_index < parts.length; part_index++)
+    {
+      if (parts[part_index] === "Ctrl" || parts[part_index] === "Shift" || parts[part_index] === "Alt" || parts[part_index] === "Win")
+      {
+        modifiers.push(parts[part_index]);
+      }
+      else { key_parts.push(parts[part_index]); }
+    }
+    output.push({ key: key_parts.join("+") || shortcut, modifiers: modifiers, name: element.getAttribute("Description") || "Unnamed factory action", action: "max_import", id: element.getAttribute("Id") || "", shortcut: shortcut, origin: "Default" });
+  }
+  return output;
+}
+
+function applyMaxOverlay(factory_bindings, changes)
+{
+  var removal_lookup = {};
+  var current_lookup = {};
+  var result = [];
+  var removals = changes.removals || [];
+  var assignments = changes.assignments || [];
+  var index;
+  for (index = 0; index < removals.length; index++)
+  {
+    removal_lookup[removals[index].id + "\u0001" + removals[index].shortcut] = true;
+  }
+  for (index = 0; index < factory_bindings.length; index++)
+  {
+    var factory = factory_bindings[index];
+    var factory_id = factory.id + "\u0001" + factory.shortcut;
+    if (!removal_lookup[factory_id])
+    {
+      current_lookup[factory_id] = result.length;
+      result.push(factory);
+    }
+  }
+  for (index = 0; index < assignments.length; index++)
+  {
+    var custom = assignments[index];
+    var custom_id = custom.id + "\u0001" + custom.shortcut;
+    var custom_binding = { key: custom.key, modifiers: custom.modifiers, name: custom.name, action: "max_import", id: custom.id, shortcut: custom.shortcut, origin: "Custom" };
+    if (current_lookup.hasOwnProperty(custom_id)) { result[current_lookup[custom_id]] = custom_binding; }
+    else
+    {
+      current_lookup[custom_id] = result.length;
+      result.push(custom_binding);
+    }
+  }
+  return result;
+}
+
+function updateMaxImportStatus()
+{
+  document.getElementById("importStatus").innerText = "Factory " + imported_max_defaults.length + " | Effective " + imported_max_bindings.length + " | Custom +" + imported_max_overlay.assignments.length + " / -" + imported_max_removals.length;
+}
+
+function importMaxHotkeyFile()
+{
+  var file_control = document.getElementById("maxHotkeyFile");
+  var file_path = file_control.value;
+  if (!/\.hsx$/i.test(file_path)) { window.alert("Select a 3ds Max .hsx hotkey preset."); return; }
+  try
+  {
+    var document_xml = new ActiveXObject("Msxml2.DOMDocument.6.0");
+    document_xml.async = false;
+    document_xml.setProperty("ProhibitDTD", true);
+    if (!document_xml.load(file_path) || document_xml.documentElement.nodeName !== "MaxHotkeyTransformations")
+    {
+      throw new Error("This file is not a readable 3ds Max hotkey transformation preset.");
+    }
+    var parsed = parseMaxHotkeys(document_xml);
+    imported_max_overlay = parsed;
+    imported_max_removals = parsed.removals;
+    imported_max_bindings = applyMaxOverlay(imported_max_defaults, imported_max_overlay);
+    updateMaxImportStatus();
+    setSourceProfile("max");
+  }
+  catch (import_error)
+  {
+    window.alert("3ds Max import failed: " + import_error.message);
+  }
+}
+
+function importMaxDefaultFile()
+{
+  var file_path = document.getElementById("maxDefaultFile").value;
+  if (!/\.hsxb$/i.test(file_path)) { window.alert("Select a 3ds Max Default.hsxb file."); return; }
+  try
+  {
+    var document_xml = new ActiveXObject("Msxml2.DOMDocument.6.0");
+    document_xml.async = false;
+    document_xml.setProperty("ProhibitDTD", true);
+    if (!document_xml.load(file_path) || document_xml.documentElement.nodeName !== "MaxHotkeys")
+    {
+      throw new Error("This file does not contain the 3ds Max factory MaxHotkeys entries.");
+    }
+    imported_max_defaults = parseMaxDefaultHotkeys(document_xml);
+    imported_max_bindings = applyMaxOverlay(imported_max_defaults, imported_max_overlay);
+    updateMaxImportStatus();
+    setSourceProfile("max");
+  }
+  catch (import_error) { window.alert("Factory hotkey import failed: " + import_error.message); }
+}
+
+function openHotkeyIndex()
+{
+  try
+  {
+    var file_system = new ActiveXObject("Scripting.FileSystemObject");
+    var location_path = unescape(window.location.pathname).replace(/\//g, "\\");
+    if (/^\\[A-Za-z]:/.test(location_path)) { location_path = location_path.substr(1); }
+    var index_path = file_system.BuildPath(file_system.GetParentFolderName(location_path), "src\\Keyboard-Setup-Hotkey-Index.hta");
+    if (!file_system.FileExists(index_path)) { window.alert("Hotkey Index not found: " + index_path); return; }
+    var windows_shell = new ActiveXObject("WScript.Shell");
+    // Existing index: activate it, and keep the HTA-level singleton as a
+    // second guard against a direct file double-click or launch race.
+    if (windows_shell.AppActivate("Keyboard Hotkey Index")) { return; }
+    windows_shell.Run('mshta.exe "' + index_path + '"', 1, false);
+  }
+  catch (open_error) { window.alert("Unable to open Hotkey Index: " + open_error.message); }
+}
+
+function getConfigPath()
+{
+  var file_system = new ActiveXObject("Scripting.FileSystemObject");
+  var current_path = unescape(window.location.pathname).replace(/\//g, "\\");
+  if (/^\\[A-Za-z]:/.test(current_path)) { current_path = current_path.substr(1); }
+  return file_system.BuildPath(file_system.GetParentFolderName(current_path), "config\\Keyboard-Setup-File-Bindings.ini");
+}
+
+function buildFileBindingIni()
+{
+  var lines = ["[Files]"];
+  for (var index = 0; index < shortcut_bindings.length; index++)
+  {
+    var binding = shortcut_bindings[index];
+    if (binding.file_path) { lines.push(bindingCode(binding) + "=" + binding.file_path); }
+  }
+  return lines.join("\r\n") + "\r\n";
+}
+
+function saveFileBindings()
+{
+  if (typeof ActiveXObject === "undefined") { return; }
+  try
+  {
+    var file_system = new ActiveXObject("Scripting.FileSystemObject");
+    var target_path = getConfigPath();
+    var target_dir = file_system.GetParentFolderName(target_path);
+    if (!file_system.FolderExists(target_dir)) { file_system.CreateFolder(target_dir); }
+    var destination = file_system.CreateTextFile(target_path, true, true);
+    destination.Write(buildFileBindingIni());
+    destination.Close();
+  }
+  catch (save_error) { window.alert("Could not save file bindings: " + save_error.message); }
+}
+
+function loadFileBindings()
+{
+  if (typeof ActiveXObject === "undefined") { return; }
+  try
+  {
+    var file_system = new ActiveXObject("Scripting.FileSystemObject");
+    var config_path = getConfigPath();
+    if (!file_system.FileExists(config_path))
+    {
+      var old_path = file_system.BuildPath(file_system.GetParentFolderName(config_path).replace(/\\config$/i, ""), "Keyboard-Setup-File-Bindings.ini");
+      if (!file_system.FileExists(old_path)) { return; }
+      config_path = old_path;
+    }
+    var source = file_system.OpenTextFile(config_path, 1, false, -1);
+    var lines = source.ReadAll().split(/\r?\n/);
+    source.Close();
+    for (var line_index = 0; line_index < lines.length; line_index++)
+    {
+      var separator = lines[line_index].indexOf("=");
+      if (separator < 1) { continue; }
+      var code = trimText(lines[line_index].substr(0, separator));
+      var path = trimText(lines[line_index].substr(separator + 1));
+      for (var binding_index = 0; binding_index < shortcut_bindings.length; binding_index++)
+      {
+        if (bindingCode(shortcut_bindings[binding_index]) === code) { shortcut_bindings[binding_index].file_path = path; }
+      }
+    }
+  }
+  catch (read_error) { document.getElementById("importStatus").innerText = "File binding config could not be read."; }
+}
+
+function browseFileTarget()
+{
+  document.getElementById("fileBrowseInput").click();
+}
+
+function useBrowsedFileTarget()
+{
+  document.getElementById("bindingFilePath").value = document.getElementById("fileBrowseInput").value;
+}
+
+/* Keep the original shaded keycap, coloured borders and strong matching glow.
+   One accumulated modifier colour is used for every physical key: no ribbons. */
+function keyboardStyleModifierKey(button, hex, matched)
+{
+  if (!hex || hasClass(button, "selected"))
+  {
+    button.style.background = "";
+    button.style.borderColor = "";
+    button.style.boxShadow = "";
+    button.style.color = "";
+    return;
+  }
+  var red = parseInt(hex.substr(1, 2), 16);
+  var green = parseInt(hex.substr(3, 2), 16);
+  var blue = parseInt(hex.substr(5, 2), 16);
+  var upper = "rgba(" + red + "," + green + "," + blue + "," + (matched ? "0.47" : "0.30") + ")";
+  var lower = "rgba(" + red + "," + green + "," + blue + "," + (matched ? "0.32" : "0.18") + ")";
+  var glow = "rgba(" + red + "," + green + "," + blue + "," + (matched ? "0.64" : "0.42") + ")";
+  button.style.background = "linear-gradient(" + upper + ", " + lower + "), linear-gradient(#303c4b, #222d3a)";
+  button.style.borderColor = hex === "#000000" ? "#D7A94F" : hex;
+  button.style.boxShadow = matched
+    ? "0 0 0 3px " + glow + ", 0 0 16px " + glow
+    : "0 0 0 1px " + glow + ", 0 2px #10151c";
+  button.style.color = "#FFFFFF";
+}
+
+/* Format each shortcut as a separate paragraph in the native key tooltip.
+   CRLF pairs create a blank line in Windows / MSHTML hover tooltips. */
+function keyboardFormatKeyTooltip(shortcut_lines)
+{
+  if (!shortcut_lines || !shortcut_lines.length) { return ""; }
+  return shortcut_lines.join("\r\n\r\n");
+}
+
+function updateKeyboardHighlights()
+{
+  var keys = document.getElementsByClassName("key");
+  var visible_bindings = getVisibleBindings();
+  var active_modifiers = getActiveModifiers();
+  var active_color = keyboardModifierDisplayColor(active_modifiers);
+  var i, j;
+  for (i = 0; i < keys.length; i++)
+  {
+    var key_label = getKeyLabel(keys[i]);
+    var modifier_name = keys[i].getAttribute("data-modifier");
+    var matching_shortcuts = [];
+    var matching_modifiers_for_key = [];
+    var compatible = false;
+    removeClass(keys[i], "assigned");
+    removeClass(keys[i], "shortcut-match");
+    removeClass(keys[i], "modifier-active");
+    if (modifier_name && active_modifiers.indexOf(modifier_name) >= 0)
+    {
+      addClass(keys[i], "modifier-active");
+    }
+    for (j = 0; j < visible_bindings.length; j++)
+    {
+      var current = visible_bindings[j];
+      if (String(current.key).toUpperCase() !== String(key_label).toUpperCase()) { continue; }
+      var is_compatible = usesActiveModifiers(current.modifiers || [], active_modifiers);
+      if (!active_modifiers.length || is_compatible)
+      {
+        /* In idle mode accumulate all assignments. When filtering, only exact
+           matches contribute to the key's colour, tooltip and glow. */
+        matching_modifiers_for_key.push(current.modifiers || []);
+        addClass(keys[i], "assigned");
+        matching_shortcuts.push(formatShortcut(current.key, current.modifiers) + " - " + current.name);
+      }
+      if (is_compatible) { compatible = true; addClass(keys[i], "shortcut-match"); }
+    }
+    keys[i].title = keyboardFormatKeyTooltip(matching_shortcuts);
+    var surface = "";
+    if (matching_modifiers_for_key.length)
+    {
+      surface = modifier_name === "Alt" ? "#FFFFFF" : keyboardModifierDisplayUnionColor(matching_modifiers_for_key);
+    }
+    else if (modifier_name && active_modifiers.indexOf(modifier_name) >= 0)
+    {
+      surface = modifier_name === "Alt" ? "#FFFFFF" : keyboardModifierDisplayColor([modifier_name]);
+    }
+    keyboardStyleModifierKey(keys[i], surface, compatible);
+  }
+  for (var n = 0; n < 4; n++)
+  {
+    var names = ["Ctrl", "Shift", "Win", "Alt"];
+    var swatch = document.getElementById("legend" + names[n]);
+    if (swatch) { swatch.style.backgroundColor = keyboardModifierDisplayColor([names[n]]); }
+  }
+  var combinations = [
+    ["CtrlShift", ["Ctrl", "Shift"]],
+    ["CtrlWin", ["Ctrl", "Win"]],
+    ["ShiftWin", ["Shift", "Win"]],
+    ["CtrlShiftWin", ["Ctrl", "Shift", "Win"]]
+  ];
+  for (var combo_index = 0; combo_index < combinations.length; combo_index++)
+  {
+    var combo_swatch = document.getElementById("legend" + combinations[combo_index][0]);
+    if (combo_swatch)
+    { combo_swatch.style.backgroundColor = keyboardModifierDisplayColor(combinations[combo_index][1]); }
+  }
+  var active_swatch = document.getElementById("activeModifierSwatch");
+  if (active_swatch) { active_swatch.style.backgroundColor = active_color; }
+  var active_hex = document.getElementById("activeModifierHex");
+  if (active_hex) { active_hex.innerText = active_color; }
+  document.getElementById("activeModifiers").innerText = "Active modifiers: " + (active_modifiers.length ? active_modifiers.join(" + ") : "None");
+  renderBindingOverview(active_modifiers);
+}
+
+function handleKeyboardKeyClick(button)
+{
+  var modifier_name = button.getAttribute("data-modifier");
+  if (modifier_name)
+  {
+    latched_modifiers[modifier_name] = !latched_modifiers[modifier_name];
+    updateKeyboardHighlights();
+    return;
+  }
+  selectKey(button);
+  openKeyEditor(button);
+  updateKeyboardHighlights();
+}
+
+/* Windows references are read-only; resident shortcuts and new preview chords remain editable. */
+function keyboardIsReadonlySelection()
+{
+  if (source_profile === "max") { return true; }
+  if (source_profile !== "windows" || editing_binding_index >= 0 || !editor_key) { return false; }
+  var entries = getVisibleBindings();
+  for (var i = 0; i < entries.length; i++)
+  {
+    var item = entries[i];
+    if (item.origin === "Default" && String(item.key).toUpperCase() === String(editor_key).toUpperCase()
+      && sameModifiers(item.modifiers || [], editor_modifiers)) { return true; }
+  }
+  return false;
+}
+
+function openKeyEditor(button)
+{
+  editor_key = getKeyLabel(button);
+  editor_modifiers = getActiveModifiers();
+  editing_binding_index = source_profile === "max" ? -1 : findBinding(editor_key, editor_modifiers);
+  fillEditor();
+}
+
+/* Help text follows the selected action, including editing existing bindings. */
+function updateActionDescription()
+{
+  var descriptions = {
+    custom: "Custom command. File targets can override one of the 21 resident hotkeys; entirely new chords remain preview-only.",
+    cycle_chrome: "Win+G: Google-search selected text; otherwise cycle Chrome windows, or start Chrome.",
+    toggle_case: "Ctrl+U: cycle selected text through UPPERCASE, lowercase and Capital.",
+    cycle_convention: "Ctrl+Shift+U: cycle eight naming styles for selected text or the word at the caret.",
+    toggle_quotes: "Ctrl+double quote: wrap selected text in quotes, or remove matching outer quotes.",
+    youtube: "Win+Y: open the YouTube homepage in a new Chrome window every time.",
+    irfanview_image: "Win+I: paste a clipboard image or open its file path. If neither is available, cycle open IrfanView windows; notify when none exist.",
+    cycle_totalcmd: "Win+C: cycle Total Commander windows; otherwise start Total Commander."
+  };
+  var action_field = document.getElementById("actionType");
+  var help = document.getElementById("actionDescription");
+  if (!help || !action_field) { return; }
+  if (keyboardIsReadonlySelection())
+  {
+    help.innerText = source_profile === "windows" ? "Windows default: read-only reference. Existing user-defined PowerKeys / AHK shortcuts can be edited." : "Merged 3ds Max shortcuts: Default and User defined. Read-only references, never registered as global AHK shortcuts.";
+    return;
+  }
+  var catalog_help = "";
+  for (var help_index = 0; help_index < keyboard_shortcut_catalog.length; help_index++) {
+    if (keyboard_shortcut_catalog[help_index].action === action_field.value) {
+      catalog_help = keyboard_shortcut_catalog[help_index].summary;
+      break;
+    }
+  }
+  help.innerText = descriptions[action_field.value] || catalog_help || descriptions.custom;
+}
+
+function fillEditor()
+{
+  var shortcut_field = document.getElementById("shortcutField");
+  var command_field = document.getElementById("commandName");
+  var action_field = document.getElementById("actionType");
+  var status_label = document.getElementById("editorStatus");
+  var file_path_field = document.getElementById("bindingFilePath");
+  shortcut_field.value = editor_key ? formatShortcut(editor_key, editor_modifiers) : "Click a key on the layout";
+  if (keyboardIsReadonlySelection())
+  {
+    keyboardUpdateWindowsOverrideNotice();
+    var reference = null;
+    var shown = getVisibleBindings();
+    for (var ref_index = 0; ref_index < shown.length; ref_index++)
+    {
+      if (String(shown[ref_index].key).toUpperCase() === String(editor_key).toUpperCase()
+        && sameModifiers(shown[ref_index].modifiers || [], editor_modifiers)) { reference = shown[ref_index]; break; }
+    }
+    command_field.value = reference ? reference.name : "No assigned shortcut";
+    action_field.value = "custom";
+    file_path_field.value = "";
+    status_label.innerText = source_profile === "windows" ? "Windows default / unassigned (read-only)" : "3ds Max reference";
+    updateActionDescription();
+    document.getElementById("deleteBindingButton").disabled = true;
+    document.getElementById("saveBindingButton").disabled = true;
+    return;
+  }
+  document.getElementById("saveBindingButton").disabled = false;
+  if (editing_binding_index >= 0)
+  {
+    var binding = shortcut_bindings[editing_binding_index];
+    command_field.value = binding.name;
+    action_field.value = binding.action;
+    file_path_field.value = binding.file_path || "";
+    if (document.getElementById("defaultFileHint")) { document.getElementById("defaultFileHint").innerText = binding.default_file ? "Default: " + binding.default_file : ""; }
+    status_label.innerText = "Editing assigned shortcut";
+    document.getElementById("deleteBindingButton").disabled = false;
+  }
+  else
+  {
+    command_field.value = editor_key ? "New " + editor_key + " command" : "";
+    action_field.value = "custom";
+    file_path_field.value = "";
+    if (document.getElementById("defaultFileHint")) { document.getElementById("defaultFileHint").innerText = ""; }
+    status_label.innerText = editor_key ? "New shortcut (preview only)" : "Select a key to begin";
+    document.getElementById("deleteBindingButton").disabled = true;
+  }
+  updateActionDescription();
+  keyboardUpdateWindowsOverrideNotice();
+}
+
+function saveBinding()
+{
+  if (keyboardIsReadonlySelection()) { return; }
+  if (!editor_key) { window.alert("Click a non-modifier key on the layout first."); return; }
+  var command_name = trimText(document.getElementById("commandName").value);
+  if (!command_name) { window.alert("Enter a command name."); return; }
+  var file_path = trimText(document.getElementById("bindingFilePath").value);
+  if (/\r|\n|\|/.test(file_path)) { window.alert("The file path contains unsupported characters."); return; }
+  var updated_binding = { key: editor_key, modifiers: editor_modifiers.slice(0), name: command_name, action: document.getElementById("actionType").value, file_path: file_path };
+  if (editing_binding_index >= 0) {
+    var old_binding = shortcut_bindings[editing_binding_index];
+    if (old_binding.default_file) { updated_binding.default_file = old_binding.default_file; }
+    if (old_binding.source) { updated_binding.source = old_binding.source; }
+    shortcut_bindings[editing_binding_index] = updated_binding;
+  }
+  else
+  {
+    var duplicate_index = findBinding(editor_key, editor_modifiers);
+    if (duplicate_index >= 0) { shortcut_bindings[duplicate_index] = updated_binding; editing_binding_index = duplicate_index; }
+    else { shortcut_bindings.push(updated_binding); editing_binding_index = shortcut_bindings.length - 1; }
+  }
+  saveFileBindings();
+  fillEditor();
+  updateKeyboardHighlights();
+}
+
+function cancelEditor()
+{
+  editor_key = "";
+  editor_modifiers = [];
+  editing_binding_index = -1;
+  fillEditor();
+}
+
+function deleteBinding()
+{
+  if (keyboardIsReadonlySelection()) { return; }
+  if (editing_binding_index < 0) { return; }
+  shortcut_bindings.splice(editing_binding_index, 1);
+  saveFileBindings();
+  cancelEditor();
+  updateKeyboardHighlights();
+}
+
+function editBinding(index)
+{
+  if (source_profile === "max" || (source_profile === "windows" && getVisibleBindings()[index].resident_index < 0))
+  {
+    editing_binding_index = -1;
+    var reference_binding = getVisibleBindings()[index];
+    editor_key = reference_binding.key;
+    editor_modifiers = reference_binding.modifiers.slice(0);
+    fillEditor();
+    document.getElementById("commandName").value = reference_binding.name;
+    updateKeyboardHighlights();
+    return;
+  }
+  if (source_profile === "windows") { index = getVisibleBindings()[index].resident_index; }
+  editing_binding_index = index;
+  editor_key = shortcut_bindings[index].key;
+  editor_modifiers = shortcut_bindings[index].modifiers.slice(0);
+  latched_modifiers.Ctrl = editor_modifiers.indexOf("Ctrl") >= 0;
+  latched_modifiers.Shift = editor_modifiers.indexOf("Shift") >= 0;
+  latched_modifiers.Alt = editor_modifiers.indexOf("Alt") >= 0;
+  latched_modifiers.Win = editor_modifiers.indexOf("Win") >= 0;
+  var keys = document.getElementsByClassName("key");
+  var i;
+  for (i = 0; i < keys.length; i++)
+  {
+    if (getKeyLabel(keys[i]).toUpperCase() === editor_key.toUpperCase() && !keys[i].getAttribute("data-modifier"))
+    {
+      selectKey(keys[i]);
+      break;
+    }
+  }
+  fillEditor();
+  updateKeyboardHighlights();
+}
+
+function changeOverviewPage(offset)
+{
+  overview_page += offset;
+  renderBindingOverview(getActiveModifiers());
+}
+
+function filterBindingOverview()
+{
+  overview_page = 0;
+  renderBindingOverview(getActiveModifiers());
+}
+
+function renderBindingOverview(active_modifiers)
+{
+  var overview = document.getElementById("bindingOverview");
+  var bindings = getVisibleBindings();
+  var search_field = document.getElementById("bindingSearch");
+  var filter_text = search_field ? trimText(search_field.value).toLowerCase() : "";
+  var matched = [];
+  var i;
+  for (i = 0; i < bindings.length; i++)
+  {
+    var binding = bindings[i];
+    if (active_modifiers.length && !usesActiveModifiers(binding.modifiers, active_modifiers)) { continue; }
+    var searchable = (binding.name + " " + (binding.shortcut || formatShortcut(binding.key, binding.modifiers)) + " " + (binding.category || "") + " " + (binding.id || "")).toLowerCase();
+    if (filter_text && searchable.indexOf(filter_text) < 0) { continue; }
+    matched.push(i);
+  }
+  var pages = Math.max(1, Math.ceil(matched.length / overview_page_size));
+  if (overview_page >= pages) { overview_page = pages - 1; }
+  if (overview_page < 0) { overview_page = 0; }
+  while (overview.firstChild) { overview.removeChild(overview.firstChild); }
+  if (!matched.length)
+  {
+    var empty_label = document.createElement("div");
+    empty_label.className = "empty-overview";
+    empty_label.innerText = filter_text || active_modifiers.length ? "No shortcuts match this filter." : (source_profile === "max" ? "Import 3ds Max hotkeys to see them here." : "No shortcuts assigned yet.");
+    overview.appendChild(empty_label);
+  }
+  var offset = overview_page * overview_page_size;
+  for (i = offset; i < Math.min(offset + overview_page_size, matched.length); i++)
+  {
+    var index = matched[i];
+    var current = bindings[index];
+    var row = document.createElement("div");
+    row.className = "overview-row";
+    var left_cell = document.createElement("span");
+    var edit_button = document.createElement("button");
+    edit_button.className = "overview-choice";
+    if (usesActiveModifiers(current.modifiers, active_modifiers)) { addClass(edit_button, "match"); }
+    var reference_color = keyboardModifierDisplayUnionColor([current.modifiers || []]) || "#D7A94F";
+    edit_button.style.borderColor = reference_color;
+    edit_button.title = "Modifier colour: " + reference_color;
+    edit_button.innerText = formatShortcut(current.key, current.modifiers);
+    edit_button.onclick = (function(binding_index) { return function() { editBinding(binding_index); }; })(index);
+    left_cell.appendChild(edit_button);
+    var right_cell = document.createElement("span");
+    right_cell.innerText = source_profile === "max" ? "[" + (current.origin === "Custom" ? "User defined" : "Default") + "] " + current.name :
+      (source_profile === "windows" ? "[" + (current.origin || "Default") + "] " + current.name : current.name);
+    if (source_profile === "windows" && current.windows_override)
+    {
+      right_cell.innerText += " [Overrides: " + current.windows_override + "]";
+      row.title = "Windows default overridden: " + current.windows_override + "; native action not forwarded when resident hotkey captures it.";
+    }
+    else if (source_profile !== "global")
+    {
+      if (current.category) { right_cell.innerText += " [" + current.category + "]"; }
+      row.title = (current.id || "") + (current.action_table ? " | " + current.action_table + " | " + current.context : "");
+    }
+    row.appendChild(left_cell);
+    row.appendChild(right_cell);
+    overview.appendChild(row);
+  }
+  var indicator = document.getElementById("bindingPageStatus");
+  if (indicator) { indicator.innerText = matched.length + " match" + (matched.length === 1 ? "" : "es") + " | Page " + (overview_page + 1) + "/" + pages; }
+  var prev = document.getElementById("bindingPagePrev");
+  var next = document.getElementById("bindingPageNext");
+  if (prev) { prev.disabled = overview_page === 0; }
+  if (next) { next.disabled = overview_page >= pages - 1; }
+}
+
+function setKeyboardScale(scale_value)
+{
+  var scale_percent = parseInt(scale_value, 10);
+  document.getElementById("keyboardCanvas").style.zoom = scale_percent / 100;
+  document.getElementById("keyboardStage").style.overflow = scale_percent > 150 ? "auto" : "hidden";
+  document.getElementById("keyboardScaleValue").innerText = scale_percent + "%";
+}
+
+function sizeKeyboardWindow()
+{
+  /* Fit a roomy fixed layout inside the current monitor work area instead of
+     opening a too-large window on portrait/secondary monitors. */
+  var target_width = 2220;
+  var target_height = 1050;
+  var available_width = target_width;
+  var available_height = target_height;
+  if (typeof screen !== "undefined")
+  {
+    if (screen.availWidth > 0) { available_width = screen.availWidth; }
+    if (screen.availHeight > 0) { available_height = screen.availHeight; }
+  }
+  var outer_width = Math.min(target_width, available_width);
+  var outer_height = Math.min(target_height, available_height);
+  window.resizeTo(outer_width, outer_height);
+  var scale = Math.min(1, (outer_width - 12) / target_width, (outer_height - 45) / target_height);
+  if (typeof screen === "undefined") { scale = 1; }
+  var shell = document.getElementById("keyboardShell");
+  if (shell && shell.style)
+  {
+    shell.style.zoom = scale;
+    shell.style.width = target_width + "px";
+    shell.style.height = target_height + "px";
+  }
+}
+
+function initializeKeyboard()
+{
+  sizeKeyboardWindow();
+  document.title = "Keyboard Setup v" + keyboard_setup_version;
+  document.getElementById("projectVersion").innerText = "v" + keyboard_setup_version;
+  var keys = document.getElementsByClassName("key");
+  var modifier_labels = { Ctrl: true, Shift: true, Alt: true, Win: true };
+  var i;
+  for (i = 0; i < keys.length; i++)
+  {
+    var label = trimText(keys[i].innerText);
+    keys[i].setAttribute("data-key", label);
+    if (modifier_labels[label])
+    {
+      keys[i].setAttribute("data-modifier", label);
+      addClass(keys[i], "modifier-key");
+    }
+    keys[i].onclick = (function(key_button) { return function() { handleKeyboardKeyClick(key_button); }; })(keys[i]);
+  }
+  document.onkeydown = handleModifierKeyDown;
+  keyboardPollRuntimeAction(true);
+  if (typeof ActiveXObject !== "undefined")
+  {
+    keyboard_action_poll_handle = window.setInterval(function() { keyboardPollRuntimeAction(false); }, 300);
+  }
+  document.onkeyup = handleModifierKeyUp;
+  window.onblur = resetPhysicalModifiers;
+  if (imported_max_defaults.length || imported_max_bindings.length)
+  {
+    updateMaxImportStatus();
+  }
+  loadFileBindings();
+  if (typeof maxImporterReadCategoryData === "function") { try { maxImporterReadCategoryData(); } catch (unused_category_error) {} }
+  fillEditor();
+  updateKeyboardHighlights();
+}
+</script>
+</head>
+<body>
+<div class="shell" id="keyboardShell">
+  <aside class="rail">
+    <div class="brand">Keyboard Setup<small>Design prototype</small></div>
+    <div class="rail-label">Workspace</div>
+    <button class="rail-item active" onclick="showOption('canvasView', document.getElementsByClassName('option')[0])">Key bindings</button>
+    <button class="rail-item" onclick="openHotkeyIndex()">Hotkey Index</button>
+    <button class="rail-item" onclick="showNotice('Profiles can be added after choosing a design.')">Profiles</button>
+    <button class="rail-item" onclick="showNotice('Startup and tray behavior are open design choices.')">Settings</button>
+    <div class="rail-note">AutoHotkey-powered global shortcuts<br><br>English QWERTY key legends. Standard full-size positions for Microsoft Wireless Comfort Keyboard 5050.</div>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <div><h1>Choose a binding interface</h1><div class="sub">Hold or latch modifiers, then click a key to add or edit its shortcut.</div></div>
+      <div class="draft"><span id="projectVersion"></span> | DESIGN SPIKE | NOT ACTIVE</div>
+    </div>
+    <div class="options">
+      <button class="option active" onclick="showOption('canvasView', this)">A - Keyboard canvas</button>
+      <button class="option" onclick="showOption('listView', this)">B - Binding list</button>
+      <button class="option" onclick="showOption('remapView', this)">C - Key remapper</button>
+    </div>
+
+    <section id="canvasView" class="view active">
+      <div class="canvas-grid">
+        <div class="keyboard-column">
+        <div class="card keyboard-card">
+          <h2>Microsoft Wireless Comfort Keyboard 5050 <span class="muted">/ English QWERTY layout</span></h2>
+          <div class="keyboard-tools"><label for="keyboardScale">Keyboard scale</label><input id="keyboardScale" type="range" min="100" max="200" step="10" value="150" oninput="setKeyboardScale(this.value)" onchange="setKeyboardScale(this.value)" /><b id="keyboardScaleValue">150%</b></div>
+          <div class="keyboard-stage" id="keyboardStage">
+          <div id="keyboardCanvas" class="keyboard">
+            <div class="kbd-top">
+              <div class="function-zone"><div class="keyrow"><button class="key">Esc</button><button class="key">F1</button><button class="key">F2</button><button class="key">F3</button><button class="key">F4</button><button class="key">F5</button><button class="key">F6</button><button class="key">F7</button><button class="key">F8</button><button class="key">F9</button><button class="key">F10</button><button class="key">F11</button><button class="key">F12</button></div></div>
+            </div>
+            <div class="kbd-body">
+              <div class="alpha">
+                <div class="keyrow"><button class="key">~</button><button class="key">1</button><button class="key">2</button><button class="key">3</button><button class="key">4</button><button class="key">5</button><button class="key">6</button><button class="key">7</button><button class="key">8</button><button class="key">9</button><button class="key">0</button><button class="key">-</button><button class="key">=</button><button class="key backspace-align">Backspace</button></div>
+                <div class="keyrow"><button class="key main-tab">Tab</button><button class="key">Q</button><button class="key">W</button><button class="key">E</button><button class="key">R</button><button class="key">T</button><button class="key">Y</button><button class="key">U</button><button class="key">I</button><button class="key">O</button><button class="key">P</button><button class="key">[</button><button class="key">]</button><button class="key backslash-align">\</button></div>
+                <div class="keyrow"><button class="key caps-lock">Caps</button><button class="key">A</button><button class="key">S</button><button class="key">D</button><button class="key">F</button><button class="key">G</button><button class="key">H</button><button class="key">J</button><button class="key">K</button><button class="key">L</button><button class="key">;</button><button class="key">'</button><button class="key enter-horizontal">Enter</button></div>
+                <div class="keyrow enter-row"><button class="key xwide">Shift</button><button class="key">Z</button><button class="key">X</button><button class="key">C</button><button class="key">V</button><button class="key">B</button><button class="key">N</button><button class="key">M</button><button class="key">,</button><button class="key">.</button><button class="key">/</button><button class="key rshift">Shift</button></div>
+                <div class="keyrow"><button class="key">Ctrl</button><button class="key">Win</button><button class="key">Alt</button><button class="key space">Space</button><button class="key">Alt</button><button class="key tab-key" data-modifier="Win" title="Windows modifier"><span class="tab-icon" aria-hidden="true"></span></button><button class="key">Menu</button><button class="key right-ctrl">Ctrl</button></div>
+              </div>
+              <div class="sidekeys">
+                <div class="navpad">
+                  <div class="nav-header"><div class="keyrow"><button class="key nav-print-screen" title="Print Screen"><span class="key-bottom-left">PrntScrn</span></button><button class="key">ScrLK</button><button class="key">Pause</button></div></div>
+                  <div class="keyrow"><button class="key">Ins</button><button class="key">Home</button><button class="key">PgUp</button></div>
+                  <div class="keyrow"><button class="key">Del</button><button class="key">End</button><button class="key">PgDn</button></div>
+                  <div class="keyrow arrow-top"><button class="key">&#8593;</button></div>
+                  <div class="keyrow arrow-bottom"><button class="key">&#8592;</button><button class="key">&#8595;</button><button class="key">&#8594;</button></div>
+                </div>
+                <div class="numpad"><div class="keyrow"><button class="key">Num</button><button class="key">/</button><button class="key">*</button><button class="key">-</button></div><div class="keyrow"><button class="key">7</button><button class="key">8</button><button class="key">9</button><button class="key num-plus">+</button></div><div class="keyrow plus-following-row"><button class="key">4</button><button class="key">5</button><button class="key">6</button></div><div class="keyrow"><button class="key">1</button><button class="key">2</button><button class="key">3</button><button class="key return-tall">Return</button></div><div class="keyrow return-bottom-row"><button class="key num-zero">0</button><button class="key">.</button></div></div>
+              </div>
+            </div>
+          </div>
+          </div>
+          <div class="keyboard-feedback"><span class="modifier-legend">
+            <span class="legend-item"><i class="legend-dot" id="legendCtrl"></i>Ctrl</span>
+            <span class="legend-item"><i class="legend-dot" id="legendShift"></i>Shift</span>
+            <span class="legend-item"><i class="legend-dot" id="legendWin"></i>Win</span>
+            <span class="legend-item"><i class="legend-dot" id="legendAlt"></i>Alt</span>
+            <span class="legend-item"><i class="legend-dot" id="legendCtrlShift"></i>Ctrl+Shift</span>
+            <span class="legend-item"><i class="legend-dot" id="legendCtrlWin"></i>Ctrl+Win</span>
+            <span class="legend-item"><i class="legend-dot" id="legendShiftWin"></i>Shift+Win</span>
+            <span class="legend-item"><i class="legend-dot" id="legendCtrlShiftWin"></i>Ctrl+Shift+Win</span>
+          </span><span class="modifier-status"><i class="legend-dot" id="activeModifierSwatch"></i><b class="modifier-hex" id="activeModifierHex">#000000</b><span id="activeModifiers">Active modifiers: None</span></span></div>
+          <div class="footer"><span>Hold physical modifiers or click Ctrl, Shift, Alt, or Win to latch them.</span><span>Key selected: <b id="selectedKey">-</b></span></div>
+        </div>
+        <div class="shortcut-monitor" id="shortcutMonitor" aria-live="polite">
+          <div class="monitor-label" id="shortcutMonitorShortcut">LAST SHORTCUT</div>
+          <div class="monitor-action" id="shortcutMonitorAction">Press an assigned shortcut</div>
+          <div class="monitor-description" id="shortcutMonitorDescription">The action name and a short explanation will appear here.</div>
+        </div>
+        </div>
+        <div class="card">
+          <h2>Shortcut editor</h2>
+          <div class="import-tools">
+            <label for="sourceProfile">SOURCE</label>
+            <select id="sourceProfile" onchange="setSourceProfile(this.value)"><option value="windows">Windows (Default + User defined)</option><option value="max">3ds Max (Default + User defined)</option></select>
+            <button class="btn primary" onclick="maxImporterOpen()">Import 3ds Max...</button>
+            <input class="hidden-file-input" type="file" id="maxHotkeyFile" accept=".hsx" onchange="importMaxHotkeyFile()" />
+            <input class="hidden-file-input" type="file" id="maxDefaultFile" accept=".hsxb" onchange="importMaxDefaultFile()" />
+            <span id="importStatus" class="hint">Import factory .hsxb and customization .hsx; both stay read-only.</span>
+          </div>
+          <div class="editor-title"><span>Selected key and modifiers</span><span id="editorStatus">Select a key to begin</span></div>
+          <div class="editor">
+            <label for="shortcutField">SHORTCUT</label>
+            <input id="shortcutField" readonly="readonly" value="Click a key on the layout" />
+            <label for="commandName">COMMAND NAME</label>
+            <input id="commandName" value="" />
+            <label for="actionType">ACTION</label>
+            <select id="actionType" onchange="updateActionDescription()"><option value="custom">Custom command</option><option value="cycle_chrome">Google search / Chrome windows</option><option value="toggle_case">Upper / lower / Capital</option><option value="cycle_convention">Cycle naming convention</option><option value="toggle_quotes">Wrap / unwrap double quotes</option><option value="youtube">YouTube window</option><option value="irfanview_image">IrfanView image</option><option value="cycle_totalcmd">Total Commander windows</option><option value="focusme_toggle">FocusMe window toggle</option><option value="clipboard_notepad">Open clipboard file in Notepad++</option><option value="kill_all_processes">Kill all active-window processes</option><option value="chatgpt_dictate">ChatGPT dictate mode</option><option value="open_hotstrings">Open hotstrings file</option><option value="tc_activate">Total Commander activate</option><option value="kill_active_process">Kill active-window process</option><option value="hibernate_windows">Hibernate Windows</option><option value="mute_launcher">Mute launcher</option><option value="suspend_key">Suspend key (no action)</option><option value="focusme_toggle">FocusMe window toggle</option><option value="go_to_path">Go to path</option><option value="mediamonkey_activate">Activate MediaMonkey</option><option value="maxscript_from_editor">Run MAXScript from editor</option></select>
+            <div id="actionDescription" class="action-description" aria-live="polite">Choose an action to see what it does.</div>
+            <div id="windowsOverrideNotice" class="windows-override-note" aria-live="polite"></div>
+            <label for="bindingFilePath">FILE TO RUN (OPTIONAL)</label>
+            <div class="browse-line"><input id="bindingFilePath" type="text" placeholder="C:\Tools\command.ahk" /><button class="btn" onclick="browseFileTarget()">Browse...</button></div>
+            <div id="defaultFileHint" class="hint" style="word-wrap:break-word;"></div>
+            <input class="hidden-file-input" type="file" id="fileBrowseInput" onchange="useBrowsedFileTarget()" />
+            <div class="editor-actions"><button id="saveBindingButton" class="btn primary" onclick="saveBinding()">Save binding</button><button class="btn" onclick="cancelEditor()">Cancel</button><button id="deleteBindingButton" class="btn" onclick="deleteBinding()">Delete</button></div>
+            <p class="hint">An assigned file overrides a built-in action or an imported Toolkit target. File targets save in config/. Restart the resident tool after edits. Newly added chords remain preview-only; 21 registered chords are active after resident restart.</p>
+          </div>
+          <div class="binding-overview"><h3>Assigned shortcuts</h3><input id="bindingSearch" class="overview-search" type="text" placeholder="Find shortcut, command, category..." onkeyup="filterBindingOverview()" /><div id="bindingOverview"></div><div class="overview-pager"><span id="bindingPageStatus">0 matches | Page 1/1</span><span><button id="bindingPagePrev" onclick="changeOverviewPage(-1)">Prev</button><button id="bindingPageNext" onclick="changeOverviewPage(1)">Next</button></span></div></div>
+          <div style="display:none">
+          <div class="binding-head"><span><button class="combo combo-choice active" onclick="showBinding('googleBinding', this)">Win + G</button><button class="combo combo-choice" onclick="showBinding('caseToggleBinding', this)">Ctrl + U</button><button class="combo combo-choice" onclick="showBinding('conventionBinding', this)">Ctrl + Shift + U</button></span><span class="tag">GLOBAL</span></div>
+          <div id="googleBinding" class="command-details active">
+            <div class="action-row"><b>Selected text</b> Search Google for selected text.</div>
+            <div class="action-row"><b>Fallback</b> Open, activate or cycle Chrome windows.</div>
+          </div>
+          <div id="caseToggleBinding" class="command-details">
+            <div class="action-row"><b>Selected text</b> Cycle UPPERCASE, lowercase, Capital.</div>
+            <div class="action-row"><b>Rule</b> All uppercase becomes lowercase, lowercase becomes Capital, Capital becomes uppercase.</div>
+            <p class="hint">A selection without letters stays unchanged.</p>
+          </div>
+          <div id="conventionBinding" class="command-details">
+            <div class="action-row"><b>Selected string</b> Detect its naming convention, convert it, and replace the selection.</div>
+            <div class="action-row"><b>Cycle</b> lowercase -&gt; Capital -&gt; UPPERCASE -&gt; PascalCase -&gt; camelCase -&gt; snake_case_low -&gt; Snake_Case_Capital -&gt; SNAKE_CASE_UPPER</div>
+            <p class="hint">If nothing is selected, convert the word under the cursor. An unrecognized style starts at lowercase.</p>
+          </div>
+          <button class="btn primary" onclick="showNotice('Command editor is a design preview.')">Edit command</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="listView" class="view">
+      <div class="card">
+        <h2>All command bindings</h2>
+        <div class="toolbar"><span class="muted">A compact table is quick to scan and edit.</span><button class="btn primary" onclick="showNotice('Add binding is a design preview.')">+ Add binding</button></div>
+        <table class="table"><thead><tr><th>SHORTCUT</th><th>COMMAND</th><th>WHEN</th><th>STATUS</th></tr></thead><tbody>
+          <tr class="selected-row"><td><span class="combo">Win + G</span></td><td>Google search / Chrome windows</td><td>Context-aware</td><td>Runtime</td></tr>
+          <tr><td><span class="combo">Ctrl + U</span></td><td>Upper / lower / Capital</td><td>Selected text</td><td>Runtime</td></tr>
+          <tr><td><span class="combo">Ctrl + Shift + U</span></td><td>Cycle naming convention</td><td>Selection or word under cursor</td><td>Runtime</td></tr>
+          <tr><td><span class="combo">Ctrl + &quot;</span></td><td>Wrap / unwrap double quotes</td><td>Selected text</td><td>Runtime</td></tr>
+          <tr><td><span class="combo">Win + Y</span></td><td>YouTube window</td><td>Browser</td><td>Runtime</td></tr>
+          <tr><td><span class="combo">Win + I</span></td><td>IrfanView image</td><td>Clipboard image / file</td><td>Runtime</td></tr>
+          <tr><td><span class="combo">Win + C</span></td><td>Total Commander windows</td><td>Window</td><td>Runtime</td></tr>
+        </tbody></table>
+        <div class="footer"><span>Keyboard preview is optional in this layout.</span><button class="btn" onclick="showNotice('Edit binding is a design preview.')">Edit selected</button></div>
+      </div>
+    </section>
+
+    <section id="remapView" class="view">
+      <div class="two-col">
+        <div class="card"><h2>Input / trigger context</h2><div class="key-pair"><div><div class="hint">SHORTCUT</div><div class="key-big">Ctrl + Shift + U</div></div><div class="arrow">-&gt;</div><div><div class="hint">WHEN</div><div class="key-big" style="font-size:16px">Selection or word under cursor</div></div></div><label class="hint">Input context</label><input class="field" value="Any active application" /><p class="hint">A trigger can depend on the shortcut, active application, selected text, or a selected file.</p></div>
+        <div class="card"><h2>Execution / action context</h2><div class="action-row"><b>Action</b> Cycle the selected string to its next naming convention and replace it.</div><div class="action-row"><b>Order</b> lowercase -&gt; Capital -&gt; UPPERCASE -&gt; PascalCase -&gt; camelCase -&gt; snake_case_low -&gt; Snake_Case_Capital -&gt; SNAKE_CASE_UPPER</div><div class="action-row"><b>Unknown style</b> Start at lowercase.</div><button class="btn primary" onclick="showNotice('Action editor is a design preview.')">Configure action</button></div>
+      </div>
+      <div class="card" style="margin-top:14px"><h2>Upper / lower / Capital</h2><div class="action-row"><b>Shortcut</b> Ctrl + U</div><div class="action-row"><b>Action</b> UPPERCASE -&gt; lowercase -&gt; Capital -&gt; UPPERCASE.</div><div class="action-row"><b>Empty or non-letter text</b> Leave unchanged.</div></div>
+    </section>
+  </main>
+</div>
+<div class="max-import-backdrop" id="maxImporterBackdrop">
+  <div class="max-import-panel">
+    <h2>3ds Max hotkey importer</h2>
+    <div class="muted">Supported application: 3ds Max. Factory shortcuts + user overlay + Action Table categories.</div>
+    <div class="max-import-row"><label>3ds Max executable (newest installed version)</label>
+      <div class="max-import-line"><input id="maxImportExe" type="text" /><button class="btn" onclick="maxImporterBrowse('exe')">Browse...</button></div></div>
+    <div class="max-import-row"><label>Factory shortcuts — Default.hsxb</label>
+      <div class="max-import-line"><input id="maxImportFactory" type="text" /><button class="btn" onclick="maxImporterBrowse('factory')">Browse...</button></div></div>
+    <div class="max-import-row"><label>User hotkeys overlay — .hsx</label>
+      <div class="max-import-line"><input id="maxImportUser" type="text" /><button class="btn" onclick="maxImporterBrowse('user')">Browse...</button></div></div>
+    <input class="hidden-file-input" id="maxImportBrowseExe" type="file" accept=".exe" onchange="maxImporterBrowsed('exe')" />
+    <input class="hidden-file-input" id="maxImportBrowseFactory" type="file" accept=".hsxb" onchange="maxImporterBrowsed('factory')" />
+    <input class="hidden-file-input" id="maxImportBrowseUser" type="file" accept=".hsx" onchange="maxImporterBrowsed('user')" />
+    <div id="maxImportMessage">Choose or confirm the detected files before importing.</div>
+    <div class="max-import-actions"><button class="btn primary" onclick="maxImporterStart()">Import + export categories</button><button class="btn" onclick="maxImporterClose()">Close</button></div>
+  </div>
+</div>
+<script language="javascript">initializeKeyboard();</script>
+</body>
+</html>
+
