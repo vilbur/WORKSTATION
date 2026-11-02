@@ -1,17 +1,27 @@
-# WORKSTATION
+# [WORKSTATION](./)
 
-Source code and supporting files for Windows workstation utilities. Each tool has its own folder and, where available, its own documentation and version history.
+Source code and supporting files for Windows workstation utilities. Each tool keeps its own project files and documentation.
 
-## Tools
+## [Keyboard](./Keyboard/)
 
-| Area | Tool | Purpose |
-| --- | --- | --- |
-| Keyboard | [Keyboard](https://drive.google.com/drive/folders/1UPKAE0i1VRfDN_ib2e035Ar-jlgYO9kr) | Keyboard setup, key bindings, and launcher. |
-| Mouse | [SmartToggleKey](https://drive.google.com/drive/folders/1gNQ3QYdVWUe-_0nklF4qlckVhphK_xjD) | Smart toggle-key utility (design and project notes). |
-| Windows | [Window-List-Manager](https://drive.google.com/drive/folders/1OZTHij4UMNxZro8Acr5QAo1zlQtbT0fA) | Window list, activation, and Chrome history management. |
-| Downloading | [video-downloader](https://drive.google.com/drive/folders/1YuLtDj0Fziy7GXN7sKLYcOJ_s3EEeQw5) | AutoHotkey video downloader. |
-| Programs / 3Ds Max | [Network License Client Setup](https://drive.google.com/drive/folders/1rNDzpgZyNzi1WqsKsxS0sTOK72okZNwh) | 3ds Max network licensing setup files. |
+- [Keyboard Setup Launcher](./Keyboard/Keyboard-Setup-Launcher.ahk) — Keyboard setup, key bindings, and launcher.
 
-## Repository
+## [Mouse](./Mouse/)
 
-[Open WORKSTATION root](https://drive.google.com/drive/folders/1iZRj4ENArh84A7UOFstTfQrB4-IfK7Uj)
+- [SmartToggleKey](./Mouse/SmartToggleKey/) — Smart toggle-key utility.
+
+## [Windows](./Windows/)
+
+- [Window-List-Manager](./Windows/Window-List-Manager/) — Window list, activation, and Chrome history management.
+
+## [Downloading](./Downloading/)
+
+- [video-downloader](./Downloading/video-downloader/) — AutoHotkey video downloader.
+
+## [Programs](https://drive.google.com/drive/folders/1n7Ktf-I6XxgiIMfJxbZSv55N9-JFqk8X)
+
+The 3Ds Max folder is excluded from Git, so its links point to Google Drive.
+
+### [3Ds Max](https://drive.google.com/drive/folders/1WkdZOLDTqLZSbZxDKAmWDnXIhLGs4FUu)
+
+- [Network License Client Setup](https://drive.google.com/drive/folders/1rNDzpgZyNzi1WqsKsxS0sTOK72okZNwh) — 3ds Max network licensing setup files.
