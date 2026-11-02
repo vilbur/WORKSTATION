@@ -1,0 +1,13 @@
+# Backup and local configuration files
+*.bak
+*.ini
+
+# Test script
+test.ms
+
+# Numbered file versions (for example: Tool_0.01.ms, Tool-02.ahk)
+*[-_.][0-9]*.*
+*[-_.]v[0-9]*.*
+
+# 3ds Max program files
+/Programs/3Ds Max/
